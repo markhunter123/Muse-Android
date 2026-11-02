@@ -1,0 +1,21 @@
+{
+  "format": 1,
+  "packageName": "io.github.markhunter123.muse",
+  "versionCode": 25,
+  "versionName": "0.3.7",
+  "minSdk": 29,
+  "apk": {
+    "name": "Muse-Android-v0.3.7-arm64.apk",
+    "size": 100585702,
+    "sha256": "b08af83dc2d64d332357c488f3664f445e20eda1409a5f2f578f2d1836deb02b",
+    "urls": [
+      "https://github.com/markhunter123/Muse-Android/releases/download/v0.3.7/Muse-Android-v0.3.7-arm64.apk"
+    ]
+  },
+  "signerSha256": "2b37a375ead19476e5d0d9e38920032ea9822e880dcc7540a14e5ab6ac1f4f69",
+  "notes": {
+    "zh": "- Muse-Android 首个版本（基于上游 DSH-Android v0.3.7，Apache-2.0）\n- 发布新版本时用 tools/make-update-manifest.py 重新生成本文件并替换 apk 的 size / sha256 / urls",
+    "en": "- First Muse-Android release (based on upstream DSH-Android v0.3.7, Apache-2.0)\n- Regenerate this file with tools/make-update-manifest.py and replace the apk size / sha256 / urls when publishing a new release"
+  },
+  "publishedAt": "2026-11-02T00:00:00Z"
+}
