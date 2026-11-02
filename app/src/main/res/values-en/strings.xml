@@ -631,7 +631,6 @@
     <string name="onb_tagline">Tell your phone what to do in one sentence. It finds files, opens apps, taps through screens and runs automations — and asks before anything risky.</string>
     <string name="onb_key_title">Connect DeepSeek</string>
     <string name="onb_key_body">Paste your API Key. It is encrypted on this phone and only sent to DeepSeek.</string>
-    <string name="onb_disclaimer">Community project, not affiliated with DeepSeek.</string>
     <string name="back">Back</string>
     <string name="copy">Copy</string>
     <string name="copy_message">Copy message</string>

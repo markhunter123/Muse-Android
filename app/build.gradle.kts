@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.markhunter123.muse"
         minSdk = 29
         targetSdk = 36
-        versionCode = 25
-        versionName = "0.3.7"
+        versionCode = 26
+        versionName = "1.0.0"
         ndk { abiFilters += "arm64-v8a" }
         // Bundled official Shizuku APK (in-app install/update); pinned in tools/fetch-shizuku.sh.
         buildConfigField("String", "SHIZUKU_VERSION", "\"${shizukuPin("VERSION")}\"")
@@ -49,6 +49,10 @@ android {
         }
     }
     buildTypes {
+        // Coexists with the store/official build on one device: io.github.markhunter123.muse.dev.
+        debug {
+            applicationIdSuffix = ".dev"
+        }
         release {
             // R8 stays off until a minified build has been verified on a device.
             isMinifyEnabled = false

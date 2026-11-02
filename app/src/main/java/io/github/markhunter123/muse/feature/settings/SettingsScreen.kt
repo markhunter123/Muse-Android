@@ -656,8 +656,6 @@ fun Onboarding(showKey: Boolean, onShowKey: (Boolean) -> Unit, onDone: () -> Uni
         }
         Spacer(Modifier.height(12.dp))
         Text(stringResource(R.string.onb_third_party), Modifier.clip(Radius.sm).clickable(onClick = onThirdParty).padding(8.dp), style = DshType.xs13, color = c.link)
-        Spacer(Modifier.height(4.dp))
-        Text(stringResource(R.string.onb_disclaimer), style = DshType.xxs12, color = c.labelTertiary, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 

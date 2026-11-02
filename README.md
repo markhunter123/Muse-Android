@@ -21,9 +21,6 @@
 
 ---
 
-> [!NOTE]
-> Muse-Android 是 [jackwener/DSH-Android](https://github.com/jackwener/DSH-Android) 的分支（fork）：功能与上游完全一致，仅更换了名称与应用图标（Muse）。引擎仍原样运行上游的 dsh（DeepSeek Harness），在此感谢原项目。本仓库遵循上游的 Apache-2.0 许可证。
-
 ## 亮点
 
 - **手机上的 App 都能操作**：用微信发消息、总结群聊，抓取小红书上的内容，在 BOSS 直聘上直接投递、打招呼，去淘宝帮你下单，等等。

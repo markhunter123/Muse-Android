@@ -1,0 +1,12 @@
+# Shell scripts and patch files must be LF: they run under bash/WSL, and
+# native/prebuilt.sh hashes native/ inputs byte-for-byte to pick the prebuilt
+# release tag (CRLF would change the hash and miss it).
+*.sh text eol=lf
+*.patch text eol=lf
+*.py text eol=lf
+*.mjs text eol=lf
+# native/ files are hashed byte-for-byte by prebuilt.sh key to select the
+# upstream prebuilt release tag — everything there must stay LF.
+native/** text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf

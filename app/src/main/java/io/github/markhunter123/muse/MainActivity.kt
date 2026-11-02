@@ -102,7 +102,7 @@ class MainActivity : ComponentActivity() {
             val theme = boot?.first
             // Until the theme is known and the first page chosen (home / onboarding).
             splash.setKeepOnScreenCondition { theme == null || !navReady }
-            DshTheme(theme ?: ThemeMode.System) {
+            DshTheme(theme ?: ThemeMode.Light) {
                 val c = Dsh.colors
                 LaunchedEffect(c.isDark) { account.darkTheme = c.isDark }
                 // Platform pages (sign-in, 充值, 用量): a destination of their own (PlatformPageSync).

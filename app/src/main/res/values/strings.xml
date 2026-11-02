@@ -631,7 +631,6 @@
     <string name="onb_tagline">一句话交给手机去办。它会找文件、开应用、点屏幕、跑自动化，有风险的操作先问你。</string>
     <string name="onb_key_title">连接 DeepSeek</string>
     <string name="onb_key_body">粘贴你的 API Key。它只加密保存在这台手机上，并且只发送给 DeepSeek。</string>
-    <string name="onb_disclaimer">社区项目，与 DeepSeek 官方无关。</string>
     <string name="back">返回</string>
     <string name="copy">复制</string>
     <string name="copy_message">复制消息</string>

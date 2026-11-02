@@ -16,7 +16,7 @@ import io.github.markhunter123.muse.R
 import io.github.markhunter123.muse.core.platform.Notifications
 import java.io.File
 import java.io.FileDescriptor
-import io.github.markhunter123.muse.engine.NodeRuntime
+import io.github.jackwener.dsh.engine.NodeRuntime
 
 /**
  * Hosts Node + dsh in the dedicated `:engine` process. Node can be started only once per process,
