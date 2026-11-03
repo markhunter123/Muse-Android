@@ -61,7 +61,7 @@ import io.github.markhunter123.muse.core.designsystem.HDivider
 import io.github.markhunter123.muse.core.designsystem.IconBtn
 import io.github.markhunter123.muse.core.designsystem.Radius
 import io.github.markhunter123.muse.core.designsystem.ShimmerText
-import io.github.markhunter123.muse.core.designsystem.SwimmingWhale
+import io.github.markhunter123.muse.core.designsystem.BreathingMu
 import io.github.markhunter123.muse.core.designsystem.Tag
 import io.github.markhunter123.muse.core.designsystem.Tone
 import io.github.markhunter123.muse.core.designsystem.copyText
@@ -377,7 +377,7 @@ private fun EndCard(turn: Turn, end: EndReason, canContinue: Boolean, onContinue
     }
 }
 
-/** dsh RunningStatus: whale + "深度求索中，用时 …" in deep-diving blue with shimmer, ticking each second. */
+/** dsh RunningStatus: whale + "思考中，用时 …" in deep-diving blue with shimmer, ticking each second. */
 @Composable
 fun RunningIndicator(live: SessionLive, lastTurn: Turn?) {
     val c = Dsh.colors
@@ -397,7 +397,7 @@ fun RunningIndicator(live: SessionLive, lastTurn: Turn?) {
     Column(Modifier.padding(top = 4.dp)) {
         if (lastTurn?.blocks?.isNotEmpty() == true) HDivider(Modifier.padding(bottom = 4.dp))
         Row(Modifier.height(28.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            SwimmingWhale(14.dp, c.deepDiving)
+            BreathingMu(14.dp, c.deepDiving)
             ShimmerText(text, DshType.xxs12.copy(lineHeight = DshType.xxs12.lineHeight), c.deepDiving, true, highlight = c.deepDivingShimmer)
         }
     }

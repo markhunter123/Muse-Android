@@ -34,15 +34,18 @@ fun Whale(modifier: Modifier = Modifier, width: Dp = 34.dp, tint: Color = Dsh.co
     Icon(painterResource(R.drawable.ic_launcher_fg), null, modifier.size(width * 1.35f), tint = tint)
 
 /**
- * Running indicator whale: dsh animates a 28 px whale sprite; here the vector whale "swims"
- * (gentle bob + tilt, 1.6 s loop). Static when reduced motion is on.
+ * Running indicator mark: the Mu glyph "breathes" (gentle scale + fade, 1.6 s loop) — alive and
+ * thinking, not swimming. Static when reduced motion is on.
  */
 @Composable
-fun SwimmingWhale(width: Dp = 14.dp, tint: Color = Dsh.colors.deepDiving) {
+fun BreathingMu(width: Dp = 14.dp, tint: Color = Dsh.colors.deepDiving) {
     if (LocalReducedMotion.current) { Whale(width = width, tint = tint); return }
-    val t = rememberInfiniteTransition(label = "whale")
-    val bob by t.animateFloat(-1f, 1f, infiniteRepeatable(tween(800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "bob")
-    Whale(Modifier.wrapContentSize().graphicsLayer { translationY = bob * 1.2f * density; rotationZ = bob * 6f }, width, tint)
+    val t = rememberInfiniteTransition(label = "mu")
+    val breath by t.animateFloat(0f, 1f, infiniteRepeatable(tween(800, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "breath")
+    Whale(Modifier.wrapContentSize().graphicsLayer {
+        scaleX = 1f + breath * 0.07f; scaleY = scaleX
+        alpha = 0.72f + breath * 0.28f
+    }, width, tint)
 }
 
 /** Sidebar brand row: mark + wordmark. */

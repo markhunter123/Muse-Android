@@ -163,7 +163,7 @@
     <string name="notif_not_finished_generic">Not finished yet; you can continue</string>
     <string name="notif_attention">%1$s: %2$s</string>
     <string name="notif_sessions_summary">%1$d conversations have updates</string>
-    <string name="deep_diving">Deep diving for %1$s ···</string>
+    <string name="deep_diving">Thinking for %1$s ···</string>
     <string name="starting_engine">Starting the agent engine…</string>
     <string name="waiting_unlock">Waiting for you to unlock the phone…</string>
     <string name="waiting_network">Waiting for the network to come back…</string>

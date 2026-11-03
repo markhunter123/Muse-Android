@@ -125,7 +125,7 @@ S = [
 ("retry_continue_prompt", "继续", "Continue"),
 ("output_cap", "已达到输出 token 上限", "Output token limit reached"),
 ("output_cap_hint", "回答被截断。发送“继续”可让模型接着输出。", "The reply was cut off. Send “continue” to let the model keep going."),
-("deep_diving", "深度求索中，用时 %1$s ···", "Deep diving for %1$s ···"),
+("deep_diving", "思考中，用时 %1$s ···", "Thinking for %1$s ···"),
 ("starting_engine", "正在启动智能体引擎…", "Starting the agent engine…"),
 ("waiting_unlock", "等待你解锁手机后继续…", "Waiting for you to unlock the phone…"),
 ("waiting_network", "等待网络恢复后继续…", "Waiting for the network to come back…"),
