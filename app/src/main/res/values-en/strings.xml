@@ -782,6 +782,9 @@
     <string name="voice_tencent_desc">Once configured, voice input uses Tencent Cloud one-shot ASR instead of the system recognizer. Keys are encrypted on this device</string>
     <string name="voice_tencent_configured">Configured</string>
     <string name="voice_tencent_missing">Not configured</string>
+    <string name="set_always_allow">Always-allowed tools</string>
+    <string name="set_always_allow_desc">Tools you allowed with "Always allow" skip the confirm card; tap ✕ to revoke.</string>
+    <string name="always_allow_revoke">Revoke always-allow</string>
     <string name="voice_starting">Starting…</string>
     <string name="voice_listening">Listening…</string>
     <string name="voice_sending">Sending</string>

@@ -15,7 +15,7 @@ data class PendingApproval(
     val reason: String?,
     val arguments: String?,
     val risk: Risk,
-    /** dsh shows 始终允许 only when the host offers it; we offer a per-session grant except for dangerous tools. */
+    /** dsh shows 始终允许 only when the host offers it; we offer a persistent grant, except for dangerous or outward tools (those always ask). */
     val canAlwaysAllow: Boolean,
 )
 

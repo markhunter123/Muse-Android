@@ -72,6 +72,7 @@ import io.github.markhunter123.muse.core.designsystem.Dsh
 import io.github.markhunter123.muse.core.designsystem.DshType
 import io.github.markhunter123.muse.core.designsystem.FilterPill
 import io.github.markhunter123.muse.core.designsystem.Fmt
+import io.github.markhunter123.muse.core.designsystem.IconBtn
 import io.github.markhunter123.muse.core.designsystem.Radius
 import io.github.markhunter123.muse.core.designsystem.Segmented
 import io.github.markhunter123.muse.core.designsystem.SettingsCard
@@ -84,7 +85,9 @@ import io.github.markhunter123.muse.core.engine.EngineState
 import io.github.markhunter123.muse.core.model.PermissionPreset
 import io.github.markhunter123.muse.core.model.ToolGroup
 import io.github.markhunter123.muse.feature.conversation.PresetUi
+import io.github.markhunter123.muse.feature.conversation.ToolPresentation
 import io.github.markhunter123.muse.nav.AppNotesRoute
+import io.github.markhunter123.muse.nav.AutomationRoute
 import io.github.markhunter123.muse.nav.ModeRoute
 import io.github.markhunter123.muse.nav.NotifAppsRoute
 import io.github.markhunter123.muse.nav.ProviderRoute
@@ -223,6 +226,24 @@ private fun GeneralSection(vm: SettingsViewModel) {
     SettingsCard {
         SettingsRow(stringResource(R.string.set_permission), stringResource(R.string.set_permission_desc), divider = false, stacked = true) {
             Segmented(PermissionPreset.entries.map { stringResource(PresetUi.label(it)) }, s.defaultPreset.ordinal, { vm.setDefaultPreset(PermissionPreset.entries[it]) })
+        }
+        // 始终允许 grants (persisted by SessionStore on ApprovalOutcome.AllowSession): the ✕ revokes
+        // the tool's grant, so its approval card shows up again.
+        if (s.alwaysAllowTools.isNotEmpty()) SettingsRow(stringResource(R.string.set_always_allow), stringResource(R.string.set_always_allow_desc), stacked = true) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                s.alwaysAllowTools.sorted().forEach { t ->
+                    val info = ToolPresentation.info(t)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DIcon(info.icon, size = 16.dp, tint = Dsh.colors.labelSecondary)
+                            Text(stringResource(info.title), style = DshType.s14, color = Dsh.colors.labelPrimary)
+                            Tag(t, mono = true)
+                        }
+                        IconBtn(R.drawable.dsw_close_outline, { vm.revokeAlwaysAllow(t) }, size = 32.dp, iconSize = 14.dp,
+                            contentDescription = stringResource(R.string.always_allow_revoke))
+                    }
+                }
+            }
         }
         SettingsRow(stringResource(R.string.set_appearance), stacked = true) {
             Segmented(listOf(stringResource(R.string.theme_light), stringResource(R.string.theme_dark), stringResource(R.string.theme_system)),

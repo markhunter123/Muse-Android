@@ -524,6 +524,10 @@ S = [
 ("voice_tencent_desc", "配置后语音输入使用腾讯云一句话识别，不再依赖系统识别器。密钥加密保存在本机", "Once configured, voice input uses Tencent Cloud one-shot ASR instead of the system recognizer. Keys are encrypted on this device"),
 ("voice_tencent_configured", "已配置", "Configured"),
 ("voice_tencent_missing", "未配置", "Not configured"),
+# always-allow grants (Settings → General → permission card; SettingsScreen.kt / SessionStore.approve)
+("set_always_allow", "始终允许的操作", "Always-allowed tools"),
+("set_always_allow_desc", "点过「始终允许」的工具不再弹确认卡，点右侧 ✕ 撤销。", "Tools you allowed with \"Always allow\" skip the confirm card; tap ✕ to revoke."),
+("always_allow_revoke", "撤销始终允许", "Revoke always-allow"),
 ]
 def esc(s):
     s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace("'", "\\'").replace('"', '\\"')

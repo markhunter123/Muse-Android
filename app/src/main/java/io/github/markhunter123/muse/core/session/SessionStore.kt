@@ -651,19 +651,30 @@ class SessionStore @Inject constructor(
             // Reading the phone's own data (location, notifications, …) never asks.
             PermissionPreset.Ask -> if (risk == Risk.sensitive || risk == Risk.read) return "allowed-once"
         }
-        if (sessionGrants[sessionId]?.contains(tool) == true && risk != Risk.dangerous) return "allowed-once"
+        // 始终允许 outlives the session now: the grant is stored in settings, so a tool the user
+        // always-allowed skips this card in every conversation and after restarts (revoke in
+        // 设置 → 通用 → 权限). Dangerous tools and outward messaging never ride a grant.
+        if (risk != Risk.dangerous && tool !in OUTWARD_TOOLS &&
+            (tool in settings.current().alwaysAllowTools || sessionGrants[sessionId]?.contains(tool) == true)) return "allowed-once"
         val key = UUID.randomUUID().toString()
         val callId = p.s("callId")
         val args = callArguments(sessionId, p.s("sessionId"), callId)
         val deferred = CompletableDeferred<ApprovalOutcome>()
         approvals[key] = deferred
-        val outcome = awaitCard(sessionId, PendingApproval(key, sessionId, tool, callId, p.s("reason"), args, risk, risk != Risk.dangerous), key, approvals, deferred) {
+        // The 始终允许 button only shows when a grant can actually apply: never for dangerous tools
+        // or outward messaging (those must ask every time, in every preset).
+        val outcome = awaitCard(sessionId, PendingApproval(key, sessionId, tool, callId, p.s("reason"), args, risk, risk != Risk.dangerous && tool !in OUTWARD_TOOLS), key, approvals, deferred) {
             if (!AppVisibility.isForeground) announceWaiting(sessionId, context.getString(R.string.notif_approval_title), context.getString(R.string.notif_approval_text, tool))
         }
         android.util.Log.i(TAG, "approval $tool answered $outcome; preset now ${flowOf(sessionId).value.preset.id}")
         return when (outcome) {
             ApprovalOutcome.AllowOnce -> "allowed-once"
-            ApprovalOutcome.AllowSession -> { sessionGrants.getOrPut(sessionId) { ConcurrentHashMap.newKeySet() }.add(tool); "allowed-once" }
+            ApprovalOutcome.AllowSession -> {
+                sessionGrants.getOrPut(sessionId) { ConcurrentHashMap.newKeySet() }.add(tool)
+                // 始终允许 means it: persist the grant beyond this session (and app restarts).
+                settings.addAlwaysAllowTool(tool)
+                "allowed-once"
+            }
             ApprovalOutcome.Reject -> "rejected"
         }
     }

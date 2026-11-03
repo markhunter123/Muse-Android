@@ -182,6 +182,8 @@ class SettingsViewModel @Inject constructor(
     fun setWorkDetails(w: WorkDetails) = viewModelScope.launch { repo.setWorkDetails(w) }
     fun setBusySend(b: BusySend) = viewModelScope.launch { repo.setBusySend(b) }
     fun setDefaultPreset(p: PermissionPreset) = viewModelScope.launch { repo.setDefaultPreset(p) }
+    /** Revokes a 始终允许 grant: the tool asks on the approval card again. */
+    fun revokeAlwaysAllow(tool: String) = viewModelScope.launch { repo.removeAlwaysAllowTool(tool) }
     fun setAllowExternalApps(on: Boolean) = viewModelScope.launch { repo.setAllowExternalApps(on) }
     fun setVoiceOnAssist(on: Boolean) = viewModelScope.launch { repo.setVoiceOnAssist(on) }
     fun setAutoUpdateCheck(on: Boolean) = viewModelScope.launch { repo.setAutoUpdateCheck(on) }

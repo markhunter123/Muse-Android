@@ -61,6 +61,8 @@ data class Settings(
     val workDetails: WorkDetails = WorkDetails.Standard,
     val busySend: BusySend = BusySend.Queue,
     val defaultPreset: PermissionPreset = PermissionPreset.Full,
+    /** Tools granted with 始终允许 on the approval card: they skip it everywhere from now on (revocable in 设置 → 通用 → 权限). */
+    val alwaysAllowTools: Set<String> = emptySet(),
     /** 允许其他 App 调用: whether the exported RUN_TASK entry accepts tasks from other apps. Off by default. */
     val allowExternalApps: Boolean = false,
     /** 唤起助手时直接语音输入: the assistant gesture opens the quick panel already listening. */
@@ -117,6 +119,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val workDetails = stringPreferencesKey("work_details")
         val busySend = stringPreferencesKey("busy_send")
         val preset = stringPreferencesKey("default_preset")
+        val alwaysAllow = stringSetPreferencesKey("always_allow_tools")
         val externalApps = booleanPreferencesKey("allow_external_apps")
         val agentScreen = booleanPreferencesKey("agent_screen")
         val reflect = booleanPreferencesKey("reflect_experience")
@@ -148,6 +151,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         workDetails = this[K.workDetails]?.let { v -> WorkDetails.entries.firstOrNull { it.name == v } } ?: WorkDetails.Standard,
         busySend = this[K.busySend]?.let { v -> BusySend.entries.firstOrNull { it.name == v } } ?: BusySend.Queue,
         defaultPreset = PermissionPreset.of(this[K.preset]),
+        alwaysAllowTools = this[K.alwaysAllow] ?: emptySet(),
         allowExternalApps = this[K.externalApps] ?: false,
         agentScreen = this[K.agentScreen] ?: true,
         reflectExperience = this[K.reflect] ?: true,
@@ -204,6 +208,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setWorkDetails(v: WorkDetails) = context.store.edit { it[K.workDetails] = v.name }
     suspend fun setBusySend(v: BusySend) = context.store.edit { it[K.busySend] = v.name }
     suspend fun setDefaultPreset(p: PermissionPreset) = context.store.edit { it[K.preset] = p.id }
+    /** Records a 始终允许 grant ([ApprovalOutcome.AllowSession]); [removeAlwaysAllowTool] revokes it. */
+    suspend fun addAlwaysAllowTool(tool: String) = context.store.edit { it[K.alwaysAllow] = (it[K.alwaysAllow] ?: emptySet()) + tool }
+    suspend fun removeAlwaysAllowTool(tool: String) = context.store.edit { it[K.alwaysAllow] = (it[K.alwaysAllow] ?: emptySet()) - tool }
     suspend fun setAllowExternalApps(on: Boolean) = context.store.edit { it[K.externalApps] = on }
     suspend fun setAgentScreen(on: Boolean) = context.store.edit { it[K.agentScreen] = on }
     suspend fun setReflectExperience(on: Boolean) = context.store.edit { it[K.reflect] = on }

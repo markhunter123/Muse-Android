@@ -782,6 +782,9 @@
     <string name="voice_tencent_desc">配置后语音输入使用腾讯云一句话识别，不再依赖系统识别器。密钥加密保存在本机</string>
     <string name="voice_tencent_configured">已配置</string>
     <string name="voice_tencent_missing">未配置</string>
+    <string name="set_always_allow">始终允许的操作</string>
+    <string name="set_always_allow_desc">点过「始终允许」的工具不再弹确认卡，点右侧 ✕ 撤销。</string>
+    <string name="always_allow_revoke">撤销始终允许</string>
     <string name="voice_starting">准备中…</string>
     <string name="voice_listening">正在听…</string>
     <string name="voice_sending">即将发送</string>
