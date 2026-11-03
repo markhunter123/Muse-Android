@@ -23,8 +23,8 @@ android {
         applicationId = "io.github.markhunter123.muse"
         minSdk = 29
         targetSdk = 36
-        versionCode = 26
-        versionName = "1.0.0"
+        versionCode = 27
+        versionName = "1.0.1"
         ndk { abiFilters += "arm64-v8a" }
         // Bundled official Shizuku APK (in-app install/update); pinned in tools/fetch-shizuku.sh.
         buildConfigField("String", "SHIZUKU_VERSION", "\"${shizukuPin("VERSION")}\"")

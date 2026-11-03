@@ -50,7 +50,8 @@ import kotlin.math.sqrt
 
 /**
  * Speech → composer text: the system recognizer streams partial results into the draft, and the
- * final text is sent after a short countdown ([VoiceMachine]) unless the user edits or cancels.
+ * final result stays in the composer for the user to review and send themselves ([VoiceMachine]
+ * with [VoiceMachine.autoSend] off — no countdown, nothing is sent).
  *
  * Recognizer choice: Tencent Cloud one-shot ASR when [tencentCredentials] is configured (record
  * locally, one signed request, no partials), else the on-device recognizer (API 31+) when the
@@ -60,7 +61,8 @@ import kotlin.math.sqrt
  */
 @Stable
 class VoiceInput internal constructor(private val context: Context, private val composer: ComposerState, private val scope: CoroutineScope) {
-    private val machine = VoiceMachine()
+    // autoSend off: the final text lands in the composer and the user sends it — no countdown, no auto-send.
+    private val machine = VoiceMachine(autoSend = false)
     var state: VoiceState by mutableStateOf(VoiceState.Idle)
         private set
     val active get() = state is VoiceState.Listening || state is VoiceState.Countdown
@@ -168,13 +170,17 @@ class VoiceInput internal constructor(private val context: Context, private val 
     private fun best(b: Bundle?) = b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull().orEmpty()
 
     private fun dispatch(e: VoiceEvent) {
+        // The Listening text before this event: the machine falls back to it when the final result is empty.
+        val heard = (state as? VoiceState.Listening)?.text.orEmpty()
         val effect = machine.on(e)
         state = machine.state
         when (val s = state) {
             is VoiceState.Listening -> if (s.text.isNotEmpty()) composer.text = VoiceMachine.join(draft, s.text)
             is VoiceState.Countdown -> if (e !is VoiceEvent.Tick) { composer.text = VoiceMachine.join(draft, s.text); runTimer() }
             is VoiceState.Failed -> if (e !is VoiceEvent.Tick) runTimer()
-            VoiceState.Idle -> {}
+            // autoSend off: the final text (or the last partial when the recognizer has none — Tencent
+            // ASR is record-then-final) lands in the composer and stays there for the user to send.
+            VoiceState.Idle -> if (e is VoiceEvent.Final && !machine.autoSend) composer.text = VoiceMachine.join(draft, e.text.trim().ifEmpty { heard })
         }
         when (effect) {
             is VoiceEffect.Send -> onSend()

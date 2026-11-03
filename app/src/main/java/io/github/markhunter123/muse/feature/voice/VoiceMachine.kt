@@ -34,7 +34,7 @@ sealed interface VoiceEffect {
  * Listening → partial → final → countdown → send, as a pure reducer (Android-free, unit-tested).
  * Without [autoSend] a final result just stays in the composer.
  */
-class VoiceMachine(private val autoSend: Boolean = true, private val countdownMs: Long = COUNTDOWN_MS) {
+class VoiceMachine(val autoSend: Boolean = true, private val countdownMs: Long = COUNTDOWN_MS) {
     var state: VoiceState = VoiceState.Idle
         private set
 

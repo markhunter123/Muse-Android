@@ -58,12 +58,11 @@ import io.github.markhunter123.muse.core.designsystem.BtnVariant
 import io.github.markhunter123.muse.core.designsystem.DButton
 import io.github.markhunter123.muse.core.designsystem.DDialog
 import io.github.markhunter123.muse.core.designsystem.DIcon
-import io.github.markhunter123.muse.core.designsystem.DMenu
 import io.github.markhunter123.muse.core.designsystem.Dsh
 import io.github.markhunter123.muse.core.designsystem.DshType
 import io.github.markhunter123.muse.core.designsystem.HDivider
 import io.github.markhunter123.muse.core.designsystem.Hairline
-import io.github.markhunter123.muse.core.designsystem.MenuItem
+import io.github.markhunter123.muse.core.designsystem.IconBtn
 import io.github.markhunter123.muse.core.designsystem.Radius
 import io.github.markhunter123.muse.core.designsystem.Spinner
 import io.github.markhunter123.muse.core.designsystem.copyText
@@ -333,14 +332,14 @@ private fun Card(content: @Composable () -> Unit) {
 }
 
 /**
- * dsh sidebar account launcher: signed in → 24 dp avatar + name (menu: 设置, 退出登录); signed out →
- * a plain 设置 row with a 登录 button beside it (spec §3.7: no account → just 设置).
+ * dsh sidebar account launcher: signed in → 24 dp avatar + name with 设置 / 退出登录 buttons at the
+ * right end; signed out → a plain 设置 row with a 登录 button beside it (spec §3.7: no account →
+ * just 设置).
  */
 @Composable
 fun DrawerAccountRow(account: AccountRepository, onSettings: () -> Unit) {
     val c = Dsh.colors
     val s by account.state.collectAsStateWithLifecycle()
-    var menu by remember { mutableStateOf(false) }
     val (requestSignOut, signOutDialog) = rememberSignOut(account)
     val profile = s.displayProfile
     if (!s.signedIn) {
@@ -355,16 +354,12 @@ fun DrawerAccountRow(account: AccountRepository, onSettings: () -> Unit) {
         return
     }
     val label = profile?.name ?: profile?.contact ?: stringResource(R.string.acct_signed_in)
-    Box {
-        Row(Modifier.fillMaxWidth().height(44.dp).pressable({ menu = true }, Radius.md).padding(horizontal = 6.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AccountAvatar(account, 24.dp)
-            Text(label, Modifier.weight(1f), style = DshType.s14, color = c.labelPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        DMenu(menu, { menu = false }) {
-            MenuItem(stringResource(R.string.settings), { menu = false; onSettings() }, R.drawable.dsw_settings_outline)
-            MenuItem(stringResource(R.string.acct_sign_out), { menu = false; requestSignOut() }, R.drawable.dsw_logout_outline)
-        }
+    Row(Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 6.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        AccountAvatar(account, 24.dp)
+        Text(label, Modifier.weight(1f), style = DshType.s14, color = c.labelPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        IconBtn(R.drawable.dsw_settings_outline, { onSettings() })
+        IconBtn(R.drawable.dsw_logout_outline, requestSignOut)
     }
     signOutDialog()
 }
