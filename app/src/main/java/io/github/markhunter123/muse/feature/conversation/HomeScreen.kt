@@ -155,20 +155,23 @@ private fun ConversationPane(vm: HomeViewModel, onMenu: () -> Unit, onSettings: 
     }
 }
 
-/** dsh EmptyHero: centered whale + 所思托付，皆有归处 + 预览版 pill, composer below. No suggestion chips. */
+/** dsh EmptyHero: centered whale + 所思托付，皆有归处 + 预览版 pill, composer docked at the bottom like BottomDock. No suggestion chips. */
 @Composable
 private fun EmptyHero(vm: HomeViewModel, composer: ComposerState, settings: Settings, live: SessionLive, conv: Conversation, onAutomation: () -> Unit, onSettings: (String?) -> Unit) {
     val c = Dsh.colors
-    Column(Modifier.fillMaxSize().imePadding().navigationBarsPadding().padding(horizontal = 8.dp).padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.fillMaxSize().imePadding().navigationBarsPadding().padding(horizontal = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.weight(1f))
         Row(Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
             Whale(width = 34.dp)
             Spacer(Modifier.width(10.dp))
             Text(stringResource(R.string.hero_title), style = DshType.xl24.copy(fontSize = DshType.xl24.fontSize * 1.08f, fontWeight = androidx.compose.ui.text.font.FontWeight(500)),
                 color = c.labelPrimary, textAlign = TextAlign.Center)
         }
-        Spacer(Modifier.height(28.dp))
-        ComposerSlot(vm, composer, settings, live, conv, hero = true, onAutomation = onAutomation, onManageModes = { onSettings("Modes") })
+        Spacer(Modifier.weight(1f))
+        Box(Modifier.padding(bottom = 4.dp)) {
+            ComposerSlot(vm, composer, settings, live, conv, hero = true, onAutomation = onAutomation, onManageModes = { onSettings("Modes") })
+        }
     }
 }
 
