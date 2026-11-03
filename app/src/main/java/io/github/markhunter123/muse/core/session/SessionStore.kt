@@ -10,6 +10,7 @@ import io.github.markhunter123.muse.core.data.RuleDao
 import io.github.markhunter123.muse.core.data.SessionDao
 import io.github.markhunter123.muse.core.data.SessionEntity
 import io.github.markhunter123.muse.core.data.SettingsRepository
+import io.github.markhunter123.muse.core.data.SecretStore
 import io.github.markhunter123.muse.core.data.UsageDao
 import io.github.markhunter123.muse.core.data.UsageEntity
 import io.github.markhunter123.muse.core.engine.EngineBackgroundStartException
@@ -84,6 +85,7 @@ class SessionStore @Inject constructor(
     private val rules: RuleDao,
     private val usage: UsageDao,
     private val settings: SettingsRepository,
+    private val secrets: SecretStore,
     private val capabilities: CapabilityHub,
     private val wakeLock: TurnWakeLock,
     /** `android.ext.*` notifications (plugin progress / changes / notices) go to 设置 → 扩展. */
@@ -295,8 +297,10 @@ class SessionStore @Inject constructor(
         // A prompt the app sent for the user is not re-sent verbatim by 重试 (that asks to continue).
         val retryText = text.takeUnless { appPrompt }
         if (existing?.parentId == null) ownedRoots += sessionId
-        if (existing == null) dao.upsert(SessionEntity(sessionId, text.lineSequence().first().take(40), now, now, ruleId, running = true, preset = live.preset.id, modeId = live.modeId))
-        else dao.setRunning(sessionId, true)
+        if (existing == null) {
+            dao.upsert(SessionEntity(sessionId, text.lineSequence().first().take(40), now, now, ruleId, running = true, preset = live.preset.id, modeId = live.modeId))
+            autoTitle(sessionId, text, appPrompt, ruleId)
+        } else dao.setRunning(sessionId, true)
         // Steering a running session keeps it an engine run (no startingEngine): see hasEngineRuns.
         mutate(sessionId) { it.copy(running = true, exists = true, runStartedAt = it.runStartedAt.takeIf { _ -> live.running } ?: now,
             startingEngine = it.startingEngine || !live.running, waitingForNetwork = false) }
@@ -342,6 +346,25 @@ class SessionStore @Inject constructor(
             throw e
         } catch (e: Exception) {
             fail(sessionId, "engine", e.message ?: e.javaClass.simpleName, null, retryText)
+        }
+    }
+
+    /**
+     * 自动标题: a conversation the user just started gets its title summarized by the active
+     * model (SessionTitle) in the background, replacing the truncated first line while the turn
+     * still runs. Silent on every failure — no credential, network, server: the truncation
+     * stays. Automation turns (rule-driven or app-sent) keep the plain truncation: their label
+     * is the rule's, and the summary would hide what launched them.
+     */
+    private fun autoTitle(sessionId: String, text: String, appPrompt: Boolean, ruleId: Long?) {
+        val auto = text.lineSequence().first().take(40)
+        if (appPrompt || ruleId != null || auto.isBlank()) return
+        scope.launch {
+            val title = runCatching {
+                SessionTitle.generate(settings.current().choice, secrets, io.github.markhunter123.muse.BuildConfig.VERSION_NAME, text)
+            }.getOrNull() ?: return@launch
+            // A rename meanwhile wins: only the untouched truncation is replaced.
+            if (dao.get(sessionId)?.title == auto) rename(sessionId, title)
         }
     }
 
