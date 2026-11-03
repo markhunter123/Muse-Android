@@ -59,7 +59,7 @@ import kotlinx.coroutines.delay
 
 private enum class ArchiveFilter { Hide, All, Only }
 
-/** dsh left sidebar as a phone drawer: brand, 新会话, 自动化任务, flat session list (last updated), account footer. */
+/** dsh left sidebar as a phone drawer: brand, 新会话, flat session list (last updated), account footer. (自动化任务 and 权限与无障碍 live in 设置 now.) */
 @Composable
 fun SessionDrawer(
     sessions: List<SessionEntity>,
@@ -67,7 +67,6 @@ fun SessionDrawer(
     currentId: String,
     onNew: () -> Unit,
     onOpen: (String) -> Unit,
-    onAutomation: () -> Unit,
     /** Opens Settings, optionally at a section (SettingsSection name). */
     onSettings: (String?) -> Unit,
     onClose: () -> Unit,
@@ -100,8 +99,6 @@ fun SessionDrawer(
             Spacer(Modifier.width(6.dp))
             Text(stringResource(R.string.new_session), style = DshType.s14, color = c.labelPrimary)
         }
-        PanelEntry(R.drawable.dsw_clock_outline, stringResource(R.string.automation), onAutomation)
-        PanelEntry(R.drawable.dsw_shield_outline, stringResource(R.string.drawer_permissions)) { onSettings("Phone") }
         Row(Modifier.fillMaxWidth().heightIn(min = 40.dp).padding(start = 8.dp, top = 2.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.sessions), Modifier.weight(1f), style = DshType.xs13m, color = c.labelTertiary)
             IconBtn(R.drawable.dsw_search_outline, { searching = !searching; if (!searching) query = "" }, size = 40.dp, iconSize = 14.dp, tint = c.labelTertiary,

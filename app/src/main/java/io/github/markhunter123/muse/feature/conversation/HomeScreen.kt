@@ -84,7 +84,6 @@ fun HomeScreen(vm: HomeViewModel, onSettings: (String?) -> Unit, onAutomation: (
                     sessions, status, currentId,
                     onNew = { vm.newSession(null); scope.launch { drawer.close() } },
                     onOpen = { vm.open(it); scope.launch { drawer.close() } },
-                    onAutomation = { scope.launch { drawer.close() }; onAutomation() },
                     onSettings = { section -> scope.launch { drawer.close() }; onSettings(section) },
                     onClose = { scope.launch { drawer.close() } },
                     onRename = vm::rename, onPin = vm::pin, onMute = vm::mute, onArchive = vm::archive, onDelete = vm::delete,

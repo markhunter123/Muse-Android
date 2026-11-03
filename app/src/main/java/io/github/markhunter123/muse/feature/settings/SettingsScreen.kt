@@ -135,7 +135,7 @@ fun SettingsPage(title: String, onBack: () -> Unit, content: @Composable () -> U
 @Composable
 fun SettingsIndexScreen(onBack: () -> Unit, open: (Route) -> Unit, vm: SettingsViewModel = hiltViewModel()) =
     SettingsPage(stringResource(R.string.settings), onBack) {
-        SettingsIndex(vm.settings.collectAsStateWithLifecycle().value.extUpdateBadge) { open(SectionRoute(it)) }
+        SettingsIndex(vm.settings.collectAsStateWithLifecycle().value.extUpdateBadge, open) { open(SectionRoute(it)) }
     }
 
 /** One settings section page; its sub-pages are opened with [open]. [onTop]: the current page (sheets show on one page only). */
@@ -176,13 +176,19 @@ fun ModeScreen(route: ModeRoute, onBack: () -> Unit, onReplace: (String) -> Unit
 }
 
 @Composable
-private fun SettingsIndex(extUpdates: Int, onOpen: (SettingsSection) -> Unit) {
+private fun SettingsIndex(extUpdates: Int, open: (Route) -> Unit, onOpen: (SettingsSection) -> Unit) {
     val c = Dsh.colors
+    // The index rows are the one settings surface users scan first: bigger titles than section pages.
+    val title = DshType.base16
     Spacer(Modifier.height(8.dp))
     SettingsCard {
         SettingsSection.entries.forEachIndexed { i, s ->
-            SettingsRow(stringResource(s.label), divider = i > 0, onClick = { onOpen(s) },
-                leading = { DIcon(s.icon, size = 18.dp, tint = c.labelSecondary) },
+            // 自动化任务 sits between 通用 and 模型服务 (moved out of the drawer); a top-level route, so Back returns here.
+            if (s == SettingsSection.Model) SettingsRow(stringResource(R.string.automation), onClick = { open(AutomationRoute) }, titleStyle = title,
+                leading = { DIcon(R.drawable.dsw_clock_outline, size = 20.dp, tint = c.labelSecondary) },
+                trailing = { DIcon(R.drawable.dsw_chevron_right_outline, size = 14.dp, tint = c.labelTertiary) })
+            SettingsRow(stringResource(s.label), divider = i > 0, onClick = { onOpen(s) }, titleStyle = title,
+                leading = { DIcon(s.icon, size = 20.dp, tint = c.labelSecondary) },
                 trailing = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         // 扩展: "N 个可更新" (updates are never automatic, §7.3).

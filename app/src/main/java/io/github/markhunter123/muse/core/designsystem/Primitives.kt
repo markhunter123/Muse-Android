@@ -493,6 +493,8 @@ fun SettingsRow(
     divider: Boolean = true,
     stacked: Boolean = false,
     titleColor: Color = Dsh.colors.labelPrimary,
+    /** The settings index uses a bigger title; section pages keep the default. */
+    titleStyle: TextStyle = DshType.s14,
     leading: (@Composable () -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -502,14 +504,14 @@ fun SettingsRow(
         val base = Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(horizontal = 16.dp, vertical = 12.dp)
         if (stacked) Column(base, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = DshType.s14, color = titleColor)
+                Text(title, style = titleStyle, color = titleColor)
                 if (description != null) Text(description, style = DshType.xs13, color = c.labelTertiary)
             }
             trailing?.invoke()
         } else Row(base, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             leading?.invoke()
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = DshType.s14, color = titleColor)
+                Text(title, style = titleStyle, color = titleColor)
                 if (description != null) Text(description, style = DshType.xs13, color = c.labelTertiary)
             }
             trailing?.invoke()
