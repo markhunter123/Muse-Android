@@ -12,6 +12,19 @@ android {
     defaultConfig {
         minSdk = 29
         consumerProguardFiles("consumer-rules.pro")
+        ndk {
+            abiFilters += "arm64-v8a"
+        }
+    }
+
+    // MUSE: adb 配对 JNI（Task 9）；本机 NDK r29（D:\Android\Sdk\ndk\29.0.14206865）
+    ndkVersion = "29.0.14206865"
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/jni/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     compileOptions {
@@ -34,6 +47,8 @@ dependencies {
     compileOnly(libs.shizuku.provider)
     implementation(libs.gson)
     implementation(libs.androidx.annotation)
+    // adb 客户端 vendored 文件用：KTX 的 edit{} 扩展
+    implementation(libs.androidx.core.ktx)
     api(libs.rikkax.parcelablelist)
     implementation(libs.hidden.compat)
     compileOnly(libs.hidden.stub)
