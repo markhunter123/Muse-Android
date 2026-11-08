@@ -41,7 +41,7 @@ class ShellGate @Inject constructor(val shell: ShizukuShell, private val session
         val s = access.refresh()
         if (s.ready) return true
         if (call.unattended || call.sessionId.isEmpty() || access.isDeclined(call.sessionId)) return false
-        if (optional && (s == ShellState.NotInstalled || s is ShellState.Unsupported)) return false
+        if (optional && (s == ShellState.NotPaired || s is ShellState.Unsupported)) return false
         val answered = call.waitFor("set up Shizuku") { coroutineScope {
             val ready = async { access.state.first { it.ready }; true }
             val asked = async { sessions.get().requestPermission(call.sessionId, toolName, SHIZUKU_WHAT) }

@@ -288,7 +288,7 @@ class SettingsViewModel @Inject constructor(
             checks += DoctorCheck(it.title(zh), it.check(context), it.why(zh), it.intent(context))
         }
         val shell = shizuku.access.refresh()
-        checks += DoctorCheck("Shizuku", if (shell == io.github.markhunter123.muse.core.platform.ShellState.NotInstalled) null else shell.ready,
+        checks += DoctorCheck("Shizuku", if (shell == io.github.markhunter123.muse.core.platform.ShellState.NotPaired) null else shell.ready,
             listOfNotNull(shellStateLabel(context, shell), shellStateHint(context, shell)).joinToString(" · "), shellFixIntent(shizuku.access, shell, shizukuInstaller.bundled))
         agentScreen.lastCreateError?.let { checks += DoctorCheck(context.getString(R.string.agent_screen_doctor), false, context.getString(R.string.agent_screen_create_failed, it)) }
         val signedIn = account.signedIn

@@ -6,13 +6,11 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,8 +96,8 @@ fun rememberShellState(): Pair<ShellAccess, ShellState> {
 
 /** Short status label for rows and Doctor; a too-old server says which API it has. */
 fun shellStateLabel(context: Context, s: ShellState): String = when (s) {
-    ShellState.NotInstalled -> context.getString(R.string.shizuku_missing)
-    is ShellState.InstalledNotRunning -> context.getString(R.string.shizuku_stopped)
+    ShellState.NotPaired -> context.getString(R.string.shizuku_missing)
+    is ShellState.PairedNotRunning -> context.getString(R.string.shizuku_stopped)
     is ShellState.RunningNoPermission -> context.getString(R.string.shizuku_unauthorized)
     is ShellState.Unsupported -> context.getString(R.string.shizuku_unsupported_v, s.version, ShellAccess.MIN_VERSION)
     ShellState.Ready -> context.getString(R.string.shizuku_ready)
@@ -107,8 +105,9 @@ fun shellStateLabel(context: Context, s: ShellState): String = when (s) {
 
 /** The next step for the state in one line (Doctor rows, the card's caption); null when ready. */
 fun shellStateHint(context: Context, s: ShellState): String? = when (s) {
-    ShellState.NotInstalled -> context.getString(R.string.shz_hint_missing)
-    is ShellState.InstalledNotRunning -> context.getString(if (s.wasReady) R.string.shz_hint_stopped else R.string.shz_hint_start)
+    ShellState.NotPaired -> context.getString(R.string.shz_hint_missing)
+    is ShellState.PairedNotRunning -> if (s.reason.isEmpty()) context.getString(R.string.shz_hint_start)
+        else context.getString(R.string.shell_server_last_failure, s.reason)
     is ShellState.RunningNoPermission -> context.getString(if (s.denied) R.string.shz_hint_denied else R.string.shz_hint_permission)
     is ShellState.Unsupported -> context.getString(R.string.shz_hint_old)
     ShellState.Ready -> null
@@ -119,9 +118,9 @@ fun shellStateHint(context: Context, s: ShellState): String? = when (s) {
  * [bundled]: install/update happens in-app from 设置 → 手机权限, so there is no store page to send people to.
  */
 fun shellFixIntent(access: ShellAccess, s: ShellState, bundled: Boolean): Intent? = when (s) {
-    ShellState.NotInstalled, is ShellState.Unsupported -> if (bundled) null else access.playStoreIntent()
+    ShellState.NotPaired, is ShellState.Unsupported -> if (bundled) null else access.playStoreIntent()
         ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse(ShellAccess.RELEASES_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    is ShellState.InstalledNotRunning, is ShellState.RunningNoPermission -> access.launchIntent()
+    is ShellState.PairedNotRunning, is ShellState.RunningNoPermission -> access.launchIntent()
     ShellState.Ready -> null
 }
 
@@ -170,7 +169,7 @@ fun rememberShellGuideFlow(access: ShellAccess, state: ShellState): ShellGuideFl
     val flow = remember(access) { ShellGuideFlow(access, installer, installState, context) }
     LaunchedEffect(state) {
         // Installed / updated (or done elsewhere): the install step is over.
-        if (state !is ShellState.NotInstalled && state !is ShellState.Unsupported) installer.reset()
+        if (state !is ShellState.NotPaired && state !is ShellState.Unsupported) installer.reset()
     }
     LaunchedEffect(state, flow.openedShizuku) {
         // Came back from Shizuku with its server running: go straight to the permission prompt.
@@ -184,29 +183,29 @@ fun rememberShellGuideFlow(access: ShellAccess, state: ShellState): ShellGuideFl
 fun ColumnScope.ShellGuideBody(s: ShellState, toolTitle: String?, flow: ShellGuideFlow) {
     val c = Dsh.colors
     val title = when (s) {
-        ShellState.NotInstalled -> stringResource(R.string.shz_title_install)
-        is ShellState.InstalledNotRunning -> stringResource(if (s.wasReady) R.string.shz_title_stopped else R.string.shz_title_start)
+        ShellState.NotPaired -> stringResource(R.string.shz_title_install)
+        is ShellState.PairedNotRunning -> stringResource(R.string.shz_title_stopped)
         is ShellState.RunningNoPermission -> stringResource(R.string.shz_title_permission)
         is ShellState.Unsupported -> stringResource(R.string.shz_title_old)
         ShellState.Ready -> stringResource(R.string.shz_title_ready)
     }
     Text(title, style = DshType.s14m.copy(lineHeight = DshType.base16.lineHeight), color = c.labelPrimary)
     if (toolTitle != null && !s.ready) Text(stringResource(R.string.shz_jit_body, toolTitle), style = DshType.xs13, color = c.labelSecondary)
-    val installing = s == ShellState.NotInstalled || s is ShellState.Unsupported
+    val installing = s == ShellState.NotPaired || s is ShellState.Unsupported
     val body = when (s) {
-        ShellState.NotInstalled -> stringResource(R.string.shz_body_install)
-        is ShellState.InstalledNotRunning -> if (s.wasReady) stringResource(R.string.shz_body_stopped) else null
+        ShellState.NotPaired -> stringResource(R.string.shz_body_install)
+        is ShellState.PairedNotRunning -> stringResource(R.string.shz_body_stopped)
         is ShellState.RunningNoPermission -> stringResource(if (s.denied) R.string.shz_body_denied else R.string.shz_body_permission)
         is ShellState.Unsupported -> stringResource(if (flow.updatedNeedsRestart) R.string.shz_body_old_restart else R.string.shz_body_old)
         ShellState.Ready -> stringResource(if (toolTitle != null) R.string.shz_body_resuming else R.string.shz_body_ready)
     }
-    body?.let { Text(it, style = DshType.xs13, color = if (toolTitle != null) c.labelTertiary else c.labelSecondary) }
+    Text(body, style = DshType.xs13, color = if (toolTitle != null) c.labelTertiary else c.labelSecondary)
     if (installing) installProgress(flow.install)?.let { (text, error) ->
         Text(text, style = DshType.xs13, color = if (error) c.error else c.labelSecondary)
     }
-    if (s == ShellState.NotInstalled && flow.install == ShizukuInstallState.Idle && flow.installer.bundled)
+    if (s == ShellState.NotPaired && flow.install == ShizukuInstallState.Idle && flow.installer.bundled)
         Text(stringResource(R.string.shz_bundled_note, flow.installer.bundledVersionName), style = DshType.xxs12, color = c.labelTertiary)
-    if (s is ShellState.InstalledNotRunning && !s.wasReady) {
+    if (s is ShellState.PairedNotRunning) {
         listOf(R.string.shz_step1, R.string.shz_step2, R.string.shz_step3).forEachIndexed { i, step ->
             Row(verticalAlignment = Alignment.Top) {
                 Text("${i + 1}", Modifier.width(16.dp), style = DshType.xs13m, color = c.labelTertiary)
@@ -253,12 +252,12 @@ private fun InstallActions(update: Boolean, flow: ShellGuideFlow, enabled: Boole
 fun ShellGuideActions(s: ShellState, flow: ShellGuideFlow, onDecline: (() -> Unit)?, enabled: Boolean = true, size: BtnSize = BtnSize.Md) {
     if (onDecline != null && !s.ready) DButton(stringResource(R.string.shz_decline), onDecline, variant = BtnVariant.Outline, enabled = enabled, size = size)
     when (s) {
-        ShellState.NotInstalled -> InstallActions(update = false, flow, enabled, size)
+        ShellState.NotPaired -> InstallActions(update = false, flow, enabled, size)
         is ShellState.Unsupported ->
             if (flow.updatedNeedsRestart) DButton(stringResource(R.string.shz_open), flow::openShizuku, enabled = enabled, size = size)
             else InstallActions(update = true, flow, enabled, size)
-        is ShellState.InstalledNotRunning -> {
-            if (!s.wasReady) DButton(stringResource(R.string.shz_dev_options), flow::developerOptions, variant = BtnVariant.Outline, enabled = enabled, size = size)
+        is ShellState.PairedNotRunning -> {
+            DButton(stringResource(R.string.shz_dev_options), flow::developerOptions, variant = BtnVariant.Outline, enabled = enabled, size = size)
             DButton(stringResource(R.string.shz_open), flow::openShizuku, enabled = enabled, size = size)
         }
         is ShellState.RunningNoPermission ->
@@ -269,42 +268,25 @@ fun ShellGuideActions(s: ShellState, flow: ShellGuideFlow, onDecline: (() -> Uni
 }
 
 /**
- * Standalone Shizuku card for 设置 → 手机权限 and the onboarding 增强能力 step: status, guidance and
- * — once ready, and again whenever it stopped after a reboot — the "start on boot (wireless debugging)" tip.
+ * Standalone Shizuku card for 设置 → 手机权限 and the onboarding 增强能力 step: status and guidance.
+ * (The embedded server's boot-start lands in Task 14; the old boot tip went with the official path.)
  */
 @Composable
 fun ShellAccessCard(modifier: Modifier = Modifier, onDecline: (() -> Unit)? = null) {
     val c = Dsh.colors
     val (access, s) = rememberShellState()
     val flow = rememberShellGuideFlow(access, s)
-    var tipDismissed by remember { mutableStateOf(access.bootTipDismissed) }
     SettingsCard(modifier) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StateDot(when (s) { ShellState.Ready -> DotKind.Done; is ShellState.Unsupported -> DotKind.Error; ShellState.NotInstalled -> DotKind.Idle; else -> DotKind.Warn })
+                StateDot(when (s) { ShellState.Ready -> DotKind.Done; is ShellState.Unsupported -> DotKind.Error; ShellState.NotPaired -> DotKind.Idle; else -> DotKind.Warn })
                 Text("Shizuku", Modifier.weight(1f), style = DshType.xs13m, color = c.labelTertiary)
                 Tag(shellStateLabel(LocalContext.current, s), when (s) { ShellState.Ready -> Tone.Success; is ShellState.Unsupported -> Tone.Warn; else -> Tone.Neutral })
             }
             ShellGuideBody(s, null, flow)
-            // Which Shizuku this is, so "installed" / "too old" can be checked against the app itself (#42).
-            if (s != ShellState.NotInstalled) {
-                val versions = remember(s) { access.managerVersion()?.ifEmpty { null } to access.serverVersion() }
-                Text(stringResource(R.string.shz_versions, versions.first ?: "?", versions.second?.toString() ?: stringResource(R.string.shz_server_down)),
-                    style = DshType.xxs12, color = c.labelTertiary)
-            }
-            // After a reboot (was ready, now stopped) always repeat the tip: having to restart it proves boot-start is off.
-            val rebootTip = s is ShellState.InstalledNotRunning && s.wasReady && access.bootTipApplicable
-            if ((s.ready && access.bootTipApplicable && !tipDismissed) || rebootTip) {
-                Box(Modifier.size(2.dp))
-                Text(stringResource(R.string.shz_boot_tip), style = DshType.xs13, color = c.labelSecondary)
-            }
         }
-        val showTip = s.ready && access.bootTipApplicable && !tipDismissed
-        if (!s.ready || showTip) Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            if (showTip) {
-                DButton(stringResource(R.string.shz_tip_ok), { access.dismissBootTip(); tipDismissed = true }, variant = BtnVariant.Outline, size = BtnSize.Sm)
-                DButton(stringResource(R.string.shz_open), { access.dismissBootTip(); tipDismissed = true; flow.openShizuku() }, size = BtnSize.Sm)
-            } else ShellGuideActions(s, flow, onDecline, size = BtnSize.Sm)
+        if (!s.ready) Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
+            ShellGuideActions(s, flow, onDecline, size = BtnSize.Sm)
         }
     }
 }

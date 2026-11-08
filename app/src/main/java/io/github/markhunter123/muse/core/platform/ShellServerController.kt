@@ -52,10 +52,6 @@ class ShellServerController @Inject constructor(
     private val _connection = MutableStateFlow(ConnectionStatus.IDLE)
     val connection: StateFlow<ConnectionStatus> = _connection.asStateFlow()
 
-    /** 最近一次无线路径失败的机器可读原因；成功即清空。Task 13 落进 ShellProbe.lastFailure。 */
-    private val _lastFailure = MutableStateFlow<String?>(null)
-    val lastFailure: StateFlow<String?> = _lastFailure.asStateFlow()
-
     /** 确保 server 在跑：binder → 无线调试自动连接 → root 兜底（shellRoot 门禁）。自动路径用。 */
     suspend fun ensureRunning(): ShellState = withContext(Dispatchers.IO) {
         val current = shell.refresh()
@@ -67,13 +63,13 @@ class ShellServerController @Inject constructor(
             _connection.value = ConnectionStatus.CONNECTING
             when (val outcome = launcher.launch(key, starterCmd, ::pollBinder)) {
                 AdbLaunchOutcome.Started -> {
-                    _lastFailure.value = null
+                    shell.lastFailure = null
                     _connection.value = ConnectionStatus.IDLE
                     return@withContext shell.refresh()
                 }
                 AdbLaunchOutcome.NoKey -> {}
                 else -> {
-                    _lastFailure.value = failureReason(outcome)
+                    shell.lastFailure = failureReason(outcome)
                     _connection.value = ConnectionStatus.FAILED
                 }
             }

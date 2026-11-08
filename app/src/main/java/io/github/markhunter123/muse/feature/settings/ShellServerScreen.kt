@@ -41,6 +41,7 @@ import io.github.markhunter123.muse.core.designsystem.Tag
 import io.github.markhunter123.muse.core.designsystem.Tone
 import io.github.markhunter123.muse.core.platform.ConnectionStatus
 import io.github.markhunter123.muse.core.platform.PairingStep
+import io.github.markhunter123.muse.core.platform.ShellState
 import moe.shizuku.server.muse.PairFailure
 import kotlinx.coroutines.launch
 
@@ -54,7 +55,6 @@ fun ShellServerScreen(onBack: () -> Unit) {
     val pairing = remember { shellPairingOf(context) }
     val s by access.state.collectAsStateWithLifecycle()
     val connection by controller.connection.collectAsStateWithLifecycle()
-    val lastFailure by controller.lastFailure.collectAsStateWithLifecycle()
     val step by pairing.step.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
 
@@ -83,9 +83,9 @@ fun ShellServerScreen(onBack: () -> Unit) {
                     ConnectionStatus.IDLE -> ""
                 }
                 if (connText.isNotEmpty()) Text(connText, style = DshType.xxs12, color = c.labelTertiary)
-                lastFailure?.let {
+                (s as? ShellState.PairedNotRunning)?.takeIf { it.reason.isNotEmpty() }?.let {
                     Text(
-                        stringResource(R.string.shell_server_last_failure, it),
+                        stringResource(R.string.shell_server_last_failure, it.reason),
                         style = DshType.xxs12, color = c.labelTertiary,
                     )
                 }
