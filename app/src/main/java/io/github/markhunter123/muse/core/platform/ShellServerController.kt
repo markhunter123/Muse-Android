@@ -1,6 +1,7 @@
 package io.github.markhunter123.muse.core.platform
 
 import android.content.Context
+import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.markhunter123.muse.core.data.SettingsRepository
 import kotlinx.coroutines.Dispatchers
@@ -9,6 +10,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
+import moe.shizuku.server.muse.KeyStorage
+import moe.shizuku.server.muse.MuseAdbKeys
 import rikka.shizuku.Shizuku
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,9 +36,9 @@ object ShellServerCommands {
 }
 
 /**
- * 嵌入式 shell server 的启动器：binder 已活就直接用；否则设置里开了 root 启动就 exec
- * libmuse_starter.so（它 fork app_process 跑 [rikka.shizuku.server.ShizukuService]），
- * 然后轮询 binder 最多 30 秒（首次启动有 dexopt，1-2 秒起步）。手动路径只产出命令字符串给 UI 复制。
+ * 嵌入式 shell server 的启动器（spec 决策序）：binder 已活就直接用；Android 11+ 且已配对时
+ * 走无线调试自动连接（[AdbLauncher]）；设置里开了 root 自启（shellRoot）再 exec
+ * libmuse_starter.so 兜底。手动路径只产出命令字符串给 UI 复制。
  * 状态判定一律以 [ShellAccess]（binder 是否应答）为准，这里不维护第二份状态机。
  */
 @Singleton
@@ -43,22 +46,56 @@ class ShellServerController @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: SettingsRepository,
     private val shell: ShellAccess,
+    private val launcher: AdbLauncher,
+    private val keyStorage: KeyStorage,
 ) {
     private val _connection = MutableStateFlow(ConnectionStatus.IDLE)
     val connection: StateFlow<ConnectionStatus> = _connection.asStateFlow()
 
-    /** 确保 server 在跑：先看现状；开了 root 自启（shellRoot）才拉起。给开机自启等自动路径用。 */
+    /** 最近一次无线路径失败的机器可读原因；成功即清空。Task 13 落进 ShellProbe.lastFailure。 */
+    private val _lastFailure = MutableStateFlow<String?>(null)
+    val lastFailure: StateFlow<String?> = _lastFailure.asStateFlow()
+
+    /** 确保 server 在跑：binder → 无线调试自动连接 → root 兜底（shellRoot 门禁）。自动路径用。 */
     suspend fun ensureRunning(): ShellState = withContext(Dispatchers.IO) {
         val current = shell.refresh()
         if (current.ready) return@withContext current
-        if (!settings.current().shellRoot) return@withContext current
-        startRoot()
+        if (Build.VERSION.SDK_INT >= 30) {
+            val key = MuseAdbKeys.loadKey(keyStorage)
+            val info = context.applicationInfo
+            val starterCmd = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir)
+            _connection.value = ConnectionStatus.CONNECTING
+            when (val outcome = launcher.launch(key, starterCmd, ::pollBinder)) {
+                AdbLaunchOutcome.Started -> {
+                    _lastFailure.value = null
+                    _connection.value = ConnectionStatus.IDLE
+                    return@withContext shell.refresh()
+                }
+                AdbLaunchOutcome.NoKey -> {}
+                else -> {
+                    _lastFailure.value = failureReason(outcome)
+                    _connection.value = ConnectionStatus.FAILED
+                }
+            }
+        }
+        // root 兜底：spec 说 root 不静默探测——shellRoot 开关即用户的显式授权
+        if (settings.current().shellRoot) startRoot() else shell.refresh()
     }
 
     /** 设置页按钮的显式启动：点击本身就是意图，不走 shellRoot 门禁。 */
     suspend fun startViaRoot(): ShellState = withContext(Dispatchers.IO) {
         if (shell.refresh().ready) return@withContext shell.state.value
         startRoot()
+    }
+
+    private suspend fun pollBinder(): Boolean =
+        runCatching { Shizuku.pingBinder() }.getOrDefault(false)
+
+    private fun failureReason(outcome: AdbLaunchOutcome): String = when (outcome) {
+        is AdbLaunchOutcome.ConnectFailed -> "adb connect failed: ${outcome.log}"
+        AdbLaunchOutcome.NoPort -> "wireless debugging port not found"
+        AdbLaunchOutcome.BinderTimeout -> "starter ran but binder did not come up"
+        else -> "unreachable"
     }
 
     private suspend fun startRoot(): ShellState {
@@ -76,7 +113,7 @@ class ShellServerController @Inject constructor(
 
         val deadline = System.currentTimeMillis() + START_TIMEOUT_MS
         while (System.currentTimeMillis() < deadline) {
-            if (runCatching { Shizuku.pingBinder() }.getOrDefault(false)) {
+            if (pollBinder()) {
                 _connection.value = ConnectionStatus.IDLE
                 return shell.refresh()
             }

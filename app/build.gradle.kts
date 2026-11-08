@@ -63,6 +63,8 @@ android {
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
+        // vendored AdbKey init 在 JVM 单测里调 android.util.Log；默认值兜底（Robolectric 用例不受影响）。
+        unitTests.isReturnDefaultValues = true
         // Robolectric reaches into java.io.FileDescriptor on JDK 17+.
         unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED") }
     }
@@ -152,6 +154,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.markdown.m3)
     testImplementation(libs.junit)
+    // AdbLauncher 决策序单测：runTest 虚拟时钟跑挂起函数
+    testImplementation(libs.kotlinx.coroutines.test)
     // Back-stack tests: the real nav graph on a TestNavHostController (Robolectric for the Android framework bits).
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

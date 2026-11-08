@@ -31,8 +31,8 @@ class AdbKeyStoreTest {
     fun `key roundtrip keeps signing identity`() {
         val storage = InMemoryKeyStorage()
         val aesKey = softwareAesKey()
-        val k1 = MuseAdb.createKey(storage, aesKey)
-        val k2 = MuseAdb.loadKey(storage, aesKey)!!
+        val k1 = MuseAdbKeys.createKey(storage, aesKey)
+        val k2 = MuseAdbKeys.loadKey(storage, aesKey)!!
         val payload = ByteArray(20) { it.toByte() }
         assertArrayEquals(k1.sign(payload), k2.sign(payload))
     }
@@ -40,8 +40,8 @@ class AdbKeyStoreTest {
     @Test
     fun `load returns null after clear`() {
         val storage = InMemoryKeyStorage()
-        MuseAdb.createKey(storage, softwareAesKey())
+        MuseAdbKeys.createKey(storage, softwareAesKey())
         storage.clear()
-        assertNull(MuseAdb.loadKey(storage, softwareAesKey()))
+        assertNull(MuseAdbKeys.loadKey(storage, softwareAesKey()))
     }
 }
