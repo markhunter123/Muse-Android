@@ -31,6 +31,7 @@ import io.github.markhunter123.muse.feature.settings.AppNotesScreen
 import io.github.markhunter123.muse.feature.settings.EnhanceStep
 import io.github.markhunter123.muse.feature.settings.ModeScreen
 import io.github.markhunter123.muse.feature.settings.NotificationAppsScreen
+import io.github.markhunter123.muse.feature.settings.ShellServerScreen
 import io.github.markhunter123.muse.feature.settings.Onboarding
 import io.github.markhunter123.muse.feature.settings.ProviderScreen
 import io.github.markhunter123.muse.feature.settings.SettingsIndexScreen
@@ -80,6 +81,7 @@ fun NavGraphBuilder.dshGraph(nav: NavHostController, home: () -> HomeViewModel) 
         composable<AppNotesRoute> { e -> InSettings(nav, e) { AppNotesScreen(null, onBack = { nav.up(e) }, onOpen = { open(AppNotesGroupRoute(it)) }) } }
         composable<AppNotesGroupRoute> { e -> InSettings(nav, e) { AppNotesScreen(e.toRoute<AppNotesGroupRoute>().pkg, onBack = { nav.up(e) }) } }
         composable<NotifAppsRoute> { e -> InSettings(nav, e) { NotificationAppsScreen(onBack = { nav.up(e) }) } }
+        composable<ShellServerRoute> { e -> InSettings(nav, e) { ShellServerScreen(onBack = { nav.up(e) }) } }
     }
 }
 

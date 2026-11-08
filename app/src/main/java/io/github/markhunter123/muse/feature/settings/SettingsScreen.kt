@@ -93,6 +93,7 @@ import io.github.markhunter123.muse.nav.NotifAppsRoute
 import io.github.markhunter123.muse.nav.ProviderRoute
 import io.github.markhunter123.muse.nav.Route
 import io.github.markhunter123.muse.nav.SectionRoute
+import io.github.markhunter123.muse.nav.ShellServerRoute
 import io.github.markhunter123.muse.service.WakeModel
 import kotlinx.coroutines.launch
 
@@ -155,7 +156,7 @@ fun SettingsSectionScreen(section: SettingsSection, onBack: () -> Unit, open: (R
             SettingsSection.Extensions -> io.github.markhunter123.muse.feature.extensions.ExtensionsSection(open, onTop)
             SettingsSection.Modes -> ModesSection(vm) { open(ModeRoute(it.takeUnless { id -> id == NEW_MODE })) }
             SettingsSection.Usage -> UsageSection(vm)
-            SettingsSection.Phone -> PhoneSection(vm) { open(NotifAppsRoute) }
+            SettingsSection.Phone -> PhoneSection(vm, onNotificationApps = { open(NotifAppsRoute) }, onShellServer = { open(ShellServerRoute) })
             SettingsSection.About -> AboutSection(vm)
         }
     }
@@ -478,7 +479,7 @@ private fun Stat(label: String, value: String) = Column {
 
 /** 手机权限: every Android permission the tools may need, with status and a jump to its system page. */
 @Composable
-private fun PhoneSection(vm: SettingsViewModel, onNotificationApps: () -> Unit) {
+private fun PhoneSection(vm: SettingsViewModel, onNotificationApps: () -> Unit, onShellServer: () -> Unit) {
     val c = Dsh.colors
     val context = LocalContext.current
     val zh = isZh()
@@ -520,7 +521,7 @@ private fun PhoneSection(vm: SettingsViewModel, onNotificationApps: () -> Unit) 
     }
     SettingsGroupTitle(stringResource(R.string.shz_group))
     ShellAccessCard()
-    ShellServerCard()
+    ShellServerCard(onOpen = onShellServer)
     val s by vm.settings.collectAsStateWithLifecycle()
     SettingsCard(Modifier.padding(top = 8.dp)) {
         SettingsRow(stringResource(R.string.agent_screen_setting), stringResource(R.string.agent_screen_setting_desc), divider = false,

@@ -62,6 +62,8 @@ sealed interface Route
 @Serializable data class AppNotesGroupRoute(val pkg: String) : Route
 /** 手机权限 → 通知读取范围. */
 @Serializable data object NotifAppsRoute : Route
+/** 手机权限 → shell 权限页（内嵌 server 配对与启动）. */
+@Serializable data object ShellServerRoute : Route
 
 /** 设置 at [section] (a SettingsSection name; blank / unknown = the index). */
 fun settingsRoute(section: String?): Route = SettingsSection.of(section)?.let { SectionRoute(it) } ?: SettingsRoute

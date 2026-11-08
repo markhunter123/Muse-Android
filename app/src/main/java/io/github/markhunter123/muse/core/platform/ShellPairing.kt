@@ -65,6 +65,12 @@ class ShellPairing @Inject constructor(
         _step.value = PairingStep.Idle
     }
 
+    /** 重新配对：先删旧密钥再走一遍发现（spec：重新生成密钥前先删旧的）。 */
+    suspend fun restart() {
+        keyStorage.clear()
+        start()
+    }
+
     private companion object {
         const val PAIRING_DISCOVER_TIMEOUT_MS = 10_000L
     }

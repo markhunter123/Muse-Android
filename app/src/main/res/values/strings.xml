@@ -532,6 +532,22 @@
     <string name="shell_server_start">启动</string>
     <string name="shell_server_starting">正在启动…</string>
     <string name="shell_server_start_failed">启动失败</string>
+    <!-- MUSE: shell 权限页（Task 12）：无线调试检测 + 6 位码配对 -->
+    <string name="shell_server_last_failure">上次失败：%1$s</string>
+    <string name="shell_wadb_title">无线调试</string>
+    <string name="shell_wadb_on">已开启</string>
+    <string name="shell_wadb_off">未开启</string>
+    <string name="shell_wadb_hint">到「开发者选项」打开「无线调试」，配对和自动连接都靠它。</string>
+    <string name="shell_pairing_start">开始配对</string>
+    <string name="shell_pairing_again">重新配对</string>
+    <string name="shell_pairing_discovering">正在发现配对服务…</string>
+    <string name="shell_pairing_waiting">已找到配对服务。输入手机弹窗里的 6 位配对码。</string>
+    <string name="shell_pairing_code_hint">6 位配对码</string>
+    <string name="shell_pairing_submit">确认配对</string>
+    <string name="shell_pairing_paired">配对成功，正在自动连接…</string>
+    <string name="shell_pairing_fail_wrong">配对码不对，请重新配对再输一遍。</string>
+    <string name="shell_pairing_fail_timeout">连接超时，确认无线调试已开启后再试。</string>
+    <string name="shell_pairing_fail_discovery">没找到配对服务，重开一次「无线调试」再试。</string>
     <string name="shz_strip">需要 Shizuku</string>
     <string name="shz_jit_body">“%1$s”要用 Shizuku 才能直接完成。准备好后会自动继续。</string>
     <string name="shz_title_install">用 Shizuku 解锁更多能力</string>

@@ -532,6 +532,22 @@
     <string name="shell_server_start">Start</string>
     <string name="shell_server_starting">Starting…</string>
     <string name="shell_server_start_failed">Start failed</string>
+    <!-- MUSE: shell access page (Task 12): wireless-debugging detection + 6-digit pairing -->
+    <string name="shell_server_last_failure">Last failure: %1$s</string>
+    <string name="shell_wadb_title">Wireless debugging</string>
+    <string name="shell_wadb_on">On</string>
+    <string name="shell_wadb_off">Off</string>
+    <string name="shell_wadb_hint">Turn on "Wireless debugging" in Developer options — pairing and auto-connect both rely on it.</string>
+    <string name="shell_pairing_start">Start pairing</string>
+    <string name="shell_pairing_again">Pair again</string>
+    <string name="shell_pairing_discovering">Discovering pairing service…</string>
+    <string name="shell_pairing_waiting">Pairing service found. Enter the 6-digit code shown on the device.</string>
+    <string name="shell_pairing_code_hint">6-digit code</string>
+    <string name="shell_pairing_submit">Confirm pairing</string>
+    <string name="shell_pairing_paired">Paired. Connecting automatically…</string>
+    <string name="shell_pairing_fail_wrong">Wrong pairing code. Pair again and re-enter it.</string>
+    <string name="shell_pairing_fail_timeout">Connection timed out. Make sure Wireless debugging is on, then retry.</string>
+    <string name="shell_pairing_fail_discovery">Pairing service not found. Toggle Wireless debugging off/on and retry.</string>
     <string name="shz_strip">Shizuku needed</string>
     <string name="shz_jit_body">“%1$s” needs Shizuku to do this directly. It continues by itself once ready.</string>
     <string name="shz_title_install">Unlock more with Shizuku</string>
