@@ -102,4 +102,26 @@ class SteerTest {
         ), running = true)
         assertEquals("next task", conv.turns.single().user?.text)
     }
+
+    @Test fun `a fresh prompt shows at once and is replaced by its logged message`() {
+        var live = SessionLive("s", running = true).withPendingPrompt(SteerMessage("p1", "STEERTEST: list big files"))
+        assertEquals(listOf("STEERTEST: list big files"), listOfNotNull(live.pendingPrompt).map { it.text })
+        // Other events leave it pending; the turn's own user/message replaces it.
+        live = live.log(ev(0, "turn/start", """{"turn":1}"""))
+        assertTrue(live.pendingPrompt != null)
+        live = live.log(user(1, "STEERTEST: list big files"))
+        assertNull(live.pendingPrompt)
+        // Later user messages (a guard nudge, an app continuation) change nothing.
+        live = live.log(user(2, "[Muse] continue", id = "app1"))
+        assertNull(live.pendingPrompt)
+    }
+
+    @Test fun `stop or failure drops the fresh prompt bubble without copying it into the draft`() {
+        // The error row's 重试 re-sends it: a restored draft would let the user send it twice.
+        val live = SessionLive("s", running = true)
+            .withPendingPrompt(SteerMessage("p1", "STEERTEST: list big files"))
+            .idle()
+        assertNull(live.pendingPrompt)
+        assertNull(live.restoredDraft)
+    }
 }

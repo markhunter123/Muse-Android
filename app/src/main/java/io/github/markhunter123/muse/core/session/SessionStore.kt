@@ -304,6 +304,8 @@ class SessionStore @Inject constructor(
         // Steering a running session keeps it an engine run (no startingEngine): see hasEngineRuns.
         mutate(sessionId) { it.copy(running = true, exists = true, runStartedAt = it.runStartedAt.takeIf { _ -> live.running } ?: now,
             startingEngine = it.startingEngine || !live.running, waitingForNetwork = false) }
+        // The user's own message shows at once, like a steer, until dsh logs it as the turn's user/message.
+        if (!appPrompt) mutate(sessionId) { it.withPendingPrompt(SteerMessage(UUID.randomUUID().toString(), text, images.size)) }
         engine.cancelIdleShutdown()
         if (ruleIdOfSession(sessionId) != null && engine.restarts.open && engine.state.value != EngineState.Ready) {
             // Circuit breaker open: automations do not restart a crash-looping engine (Doctor shows why).

@@ -97,7 +97,12 @@ val fetchShizuku = tasks.register<Exec>("fetchShizuku") {
     val out = file(thirdPartyOut)
     inputs.file(script)
     outputs.dir(out.resolve("assets/shizuku"))
-    commandLine(script.absolutePath, out.absolutePath)
+    if (System.getProperty("os.name").lowercase().contains("windows")) {
+        // Windows can't exec .sh directly; go through Git Bash. Forward slashes keep bash happy.
+        commandLine("bash", script.absolutePath.replace('\\', '/'), out.absolutePath.replace('\\', '/'))
+    } else {
+        commandLine(script.absolutePath, out.absolutePath)
+    }
 }
 if (providers.gradleProperty("dsh.fetchShizuku").orElse("true").get().toBoolean()) {
     tasks.named("preBuild") { dependsOn(fetchShizuku) }
@@ -133,6 +138,8 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
+    // 内嵌 Shizuku server（vendor 源码 + ADB 客户端），见 shizuku-server/README.md
+    implementation(project(":shizuku-server"))
     implementation(libs.coil.compose)
     implementation(libs.markdown.m3)
     testImplementation(libs.junit)
@@ -149,4 +156,8 @@ dependencies {
     implementation(libs.pdfbox.android) { exclude(group = "org.bouncycastle") }
     // Offline text recognition (Chinese + Latin, bundled model) for custom-drawn screens without readable nodes.
     implementation(libs.mlkit.text.chinese)
+    // 语音唤醒 (WakeWordService): Vosk KWS, Apache-2.0, fully on-device; the model downloads at runtime.
+    // JNA must come as an .aar (vosk-android's documented requirement).
+    implementation(libs.vosk.android)
+    implementation(libs.jna) { artifact { type = "aar" } }
 }

@@ -93,6 +93,7 @@ import io.github.markhunter123.muse.nav.NotifAppsRoute
 import io.github.markhunter123.muse.nav.ProviderRoute
 import io.github.markhunter123.muse.nav.Route
 import io.github.markhunter123.muse.nav.SectionRoute
+import io.github.markhunter123.muse.service.WakeModel
 import kotlinx.coroutines.launch
 
 private fun openKeyPage(context: android.content.Context) {
@@ -289,6 +290,24 @@ private fun GeneralSection(vm: SettingsViewModel) {
             })
         SettingsRow(stringResource(R.string.voice_on_assist), stringResource(R.string.voice_on_assist_desc),
             trailing = { DSwitch(s.voiceOnAssist, { vm.setVoiceOnAssist(it) }) })
+        SettingsRow(stringResource(R.string.voice_auto_send), stringResource(R.string.voice_auto_send_desc),
+            trailing = { DSwitch(s.voiceAutoSend, { vm.setVoiceAutoSend(it) }) })
+        // 语音唤醒: turning it on asks for the mic (if missing), then downloads the model in the background.
+        val wakeState by vm.wakeModelState.collectAsStateWithLifecycle()
+        val micGranted = androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.RECORD_AUDIO) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        val micRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { if (it) vm.setWakeWord(true) }
+        val wakeDesc = when (val ws = wakeState) {
+            is WakeModel.State.Downloading ->
+                if (ws.total > 0) stringResource(R.string.wake_word_downloading, "${ws.got / 1_000_000} MB", "${ws.total / 1_000_000} MB")
+                else stringResource(R.string.wake_word_downloading_unknown, "${ws.got / 1_000_000} MB")
+            is WakeModel.State.Failed -> stringResource(R.string.wake_word_failed)
+            else -> stringResource(R.string.wake_word_desc)
+        }
+        SettingsRow(stringResource(R.string.wake_word), wakeDesc,
+            onClick = if (wakeState is WakeModel.State.Failed) vm::retryWakeModelDownload else null,
+            trailing = { DSwitch(s.wakeWord, { on ->
+                if (on && !micGranted) micRequest.launch(android.Manifest.permission.RECORD_AUDIO) else vm.setWakeWord(on)
+            }) })
         SettingsRow(stringResource(R.string.allow_external_apps), stringResource(R.string.allow_external_apps_desc),
             trailing = { DSwitch(s.allowExternalApps, { vm.setAllowExternalApps(it) }) })
     }
@@ -632,7 +651,7 @@ fun NotificationAppsScreen(onBack: () -> Unit, vm: SettingsViewModel = hiltViewM
 }
 
 /**
- * First run without a credential (dsh onboarding's model step): whale + 所思托付，皆有归处, then the
+ * First run without a credential (dsh onboarding's model step): whale + 让一切成为可能, then the
  * choice — 登录 DeepSeek 账号 (primary; the sign-in dialog and the in-app sign-in screen take over) or 使用 API
  * Key (the key card). Straight into the conversation once either exists.
  */

@@ -56,7 +56,7 @@ S = [
 ("dur_sep", "", " "),
 ("date_md", "%1$d月%2$d日", "%1$d/%2$d"),
 # hero / composer
-("hero_title", "所思托付，皆有归处", "Every thought entrusted finds its home"),
+("hero_title", "让一切成为可能", "Making everything possible"),
 ("composer_hint", "发消息或创建任务，/ 调用指令", "Message or run a task, / commands"),
 ("composer_hint_hero", "描述你想让手机做的事，/ 调用指令", "Describe what you want your phone to do, / commands"),
 ("plus_hint", "添加文件或调用指令", "Add files or run commands"),
@@ -528,6 +528,15 @@ S = [
 ("set_always_allow", "始终允许的操作", "Always-allowed tools"),
 ("set_always_allow_desc", "点过「始终允许」的工具不再弹确认卡，点右侧 ✕ 撤销。", "Tools you allowed with \"Always allow\" skip the confirm card; tap ✕ to revoke."),
 ("always_allow_revoke", "撤销始终允许", "Revoke always-allow"),
+# voice — auto-send + wake word (VoiceInput.kt / WakeWordService.kt / SettingsScreen entry-points card)
+("voice_auto_send", "语音自动发送", "Auto-send voice input"),
+("voice_auto_send_desc", "识别完成后等 3 秒自动发送，期间可以编辑或取消；关闭时语音只填入输入框", "Sends 3 s after recognition; edit or cancel until then. Off, the text stays in the composer"),
+("wake_word", "语音唤醒", "Wake word"),
+("wake_word_desc", "悬浮球显示时说「你好 缪斯」唤起语音输入。首次开启会下载约 42 MB 的离线模型", "Say \"Hello Muse\" (你好 缪斯) while the floating ball shows to start voice input. The ~42 MB offline model downloads on first enable"),
+("wake_word_downloading", "正在下载离线模型 %1$s / %2$s", "Downloading the offline model, %1$s / %2$s"),
+("wake_word_downloading_unknown", "正在下载离线模型 %1$s", "Downloading the offline model, %1$s"),
+("wake_word_failed", "模型下载失败，点按重试", "Model download failed; tap to retry"),
+("wake_running", "语音唤醒监听中", "Wake word listening"),
 ]
 def esc(s):
     s = s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace("'", "\\'").replace('"', '\\"')

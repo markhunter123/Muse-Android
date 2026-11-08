@@ -17,8 +17,8 @@ repo = os.path.dirname(os.path.dirname(here))
 shot_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(repo, "docs/screenshots/07-drawer.png")
 out_path = sys.argv[2] if len(sys.argv) > 2 else os.path.join(repo, "docs/screenshots/hero.webp")
 
-NAME = "DSH-Android"
-HEADLINE = ["让 DSH", "替你用手机"]
+NAME = "Muse-Android"
+HEADLINE = ["让 Muse", "替你用手机"]
 SUB = "不要 root，不用电脑，直接跑在你的安卓手机上。"
 NOTE = "Android 10 及以上 ｜ 社区项目，非 DeepSeek 官方应用"
 ASK = "列出下载目录里最大的 5 个文件"
@@ -41,6 +41,9 @@ def font(bold, size):
         p = os.path.join(d, name)
         if os.path.exists(p):
             return ImageFont.truetype(p, size, index=2)  # index 2 = SC
+    if os.name == "nt":                     # Windows ships no Noto CJK; system YaHei covers SC
+        p = os.path.join(os.environ["WINDIR"], "Fonts", "msyhbd.ttc" if bold else "msyh.ttc")
+        return ImageFont.truetype(p, size)
     sys.exit(f"font {name} not found; install fonts-noto-cjk")
 
 def rmask(size, r):

@@ -68,6 +68,7 @@ class SettingsViewModel @Inject constructor(
     private val agentScreen: io.github.markhunter123.muse.core.capability.AgentScreen,
     val updater: io.github.markhunter123.muse.core.update.AppUpdater,
     private val voiceCredentials: io.github.markhunter123.muse.feature.voice.TencentAsrCredentialsStore,
+    private val wakeModel: io.github.markhunter123.muse.service.WakeModel,
 ) : ViewModel() {
     val settings: StateFlow<DshSettings> = repo.settings.stateIn(viewModelScope, SharingStarted.Eagerly, DshSettings())
     val usage: StateFlow<List<UsageEntity>> = usage.observe().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -186,6 +187,15 @@ class SettingsViewModel @Inject constructor(
     fun revokeAlwaysAllow(tool: String) = viewModelScope.launch { repo.removeAlwaysAllowTool(tool) }
     fun setAllowExternalApps(on: Boolean) = viewModelScope.launch { repo.setAllowExternalApps(on) }
     fun setVoiceOnAssist(on: Boolean) = viewModelScope.launch { repo.setVoiceOnAssist(on) }
+    fun setVoiceAutoSend(on: Boolean) = viewModelScope.launch { repo.setVoiceAutoSend(on) }
+    /** 唤醒词: the setting, the listener service, and the model download move together. */
+    fun setWakeWord(on: Boolean) = viewModelScope.launch {
+        repo.setWakeWord(on)
+        if (on) wakeModel.ensureDownload()
+        io.github.markhunter123.muse.service.WakeWordService.setEnabled(context, on)
+    }
+    val wakeModelState: StateFlow<io.github.markhunter123.muse.service.WakeModel.State> get() = wakeModel.state
+    fun retryWakeModelDownload() = wakeModel.ensureDownload()
     fun setAutoUpdateCheck(on: Boolean) = viewModelScope.launch { repo.setAutoUpdateCheck(on) }
     fun setAgentScreen(on: Boolean) { viewModelScope.launch { repo.setAgentScreen(on) } }
     fun restartEngine() = viewModelScope.launch { sessions.restartEngine() }

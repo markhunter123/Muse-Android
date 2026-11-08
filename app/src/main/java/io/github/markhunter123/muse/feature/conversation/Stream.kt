@@ -103,8 +103,8 @@ fun ChatStream(
     val atBottom by remember { derivedStateOf { !listState.canScrollForward } }
     LaunchedEffect(listState.isScrollInProgress) { if (listState.isScrollInProgress) follow = atBottom }
     LaunchedEffect(atBottom) { if (atBottom) follow = true }
-    val lastIndex = conv.turns.size + live.steers.size
-    val tailKey = conv.turns.lastOrNull()?.let { it.blocks.size to it.status } to (live.running to live.steers.size)
+    val lastIndex = conv.turns.size + live.steers.size + (if (live.pendingPrompt != null) 1 else 0)
+    val tailKey = conv.turns.lastOrNull()?.let { it.blocks.size to it.status } to Triple(live.running, live.steers.size, live.pendingPrompt != null)
     LaunchedEffect(tailKey, live.sessionId) { if (follow && lastIndex >= 0) listState.scrollToItem(lastIndex, Int.MAX_VALUE / 2) }
 
     Box(modifier) {
@@ -115,6 +115,8 @@ fun ChatStream(
             }
             // Sent into the running turn, not logged yet: the logged user/message takes its place.
             items(live.steers, key = { "steer/${it.id}" }) { PendingSteer(it) }
+            // A fresh prompt on its way to the engine, not logged yet: the same, until dsh logs it.
+            live.pendingPrompt?.let { item(key = "pending") { PendingSteer(it, tag = false) } }
             item(key = "tail") {
                 Box(Modifier.fillMaxWidth().heightIn(min = 8.dp)) {
                     if (live.running) RunningIndicator(live, conv.turns.lastOrNull())
@@ -242,17 +244,19 @@ private fun UserMessage(u: UserMsg, compact: Boolean) {
     }
 }
 
-/** A message steered into the running turn that dsh has not logged yet: the user bubble, dimmed, with its state. */
+/** A message on its way to the engine that dsh has not logged yet: the user bubble, dimmed, with its state. */
 @Composable
-private fun PendingSteer(m: SteerMessage) {
+private fun PendingSteer(m: SteerMessage, tag: Boolean = true) {
     val c = Dsh.colors
     val maxW = (LocalConfiguration.current.screenWidthDp * 0.82f).dp
     Column(Modifier.fillMaxWidth().padding(bottom = 12.dp).alpha(0.6f), horizontalAlignment = Alignment.End) {
         if (m.images > 0) Tag(stringResource(R.string.images_n, m.images), modifier = Modifier.padding(bottom = 8.dp))
         if (m.text.isNotBlank()) Text(m.text, Modifier.widthIn(max = maxW).clip(Radius.xl).background(c.bubble).padding(horizontal = 16.dp, vertical = 10.dp),
             style = DshType.s14, color = c.labelPrimary)
-        Spacer(Modifier.height(6.dp))
-        Tag(stringResource(R.string.steer_pending), Tone.Neutral)
+        if (tag) {
+            Spacer(Modifier.height(6.dp))
+            Tag(stringResource(R.string.steer_pending), Tone.Neutral)
+        }
     }
 }
 

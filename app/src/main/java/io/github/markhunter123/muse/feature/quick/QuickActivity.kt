@@ -12,7 +12,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +28,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,7 +42,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.markhunter123.muse.MainActivity
 import io.github.markhunter123.muse.R
 import io.github.markhunter123.muse.core.data.SettingsRepository
-import io.github.markhunter123.muse.core.designsystem.DIcon
 import io.github.markhunter123.muse.core.designsystem.Dsh
 import io.github.markhunter123.muse.core.designsystem.DshTheme
 import io.github.markhunter123.muse.core.designsystem.DshType
@@ -52,7 +49,6 @@ import io.github.markhunter123.muse.core.designsystem.IconBtn
 import io.github.markhunter123.muse.core.designsystem.Radius
 import io.github.markhunter123.muse.core.designsystem.Whale
 import io.github.markhunter123.muse.core.designsystem.elevated
-import io.github.markhunter123.muse.core.designsystem.pressable
 import io.github.markhunter123.muse.core.session.RowStatus
 import io.github.markhunter123.muse.core.session.SessionStore
 import io.github.markhunter123.muse.feature.conversation.ChatStream
@@ -82,7 +78,6 @@ class QuickActivity : ComponentActivity() {
     @Inject lateinit var settingsRepo: SettingsRepository
     @Inject lateinit var store: SessionStore
     private val vm: QuickViewModel by viewModels()
-    private var useContext by mutableStateOf(false)
     /** Bumped when a summon asks to start listening (not saved: a rotation does not listen again). */
     private var listenRequest by mutableIntStateOf(0)
     private val prefs by lazy { getSharedPreferences(PREFS, MODE_PRIVATE) }
@@ -92,15 +87,12 @@ class QuickActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val fresh = savedInstanceState == null
-        // RUN_TASK comes from another app: never attach what is on screen to its task.
-        if (fresh) captureContext(intent)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (fresh) {
-            useContext = ScreenContext.text != null
             val reopened = !isShareOrTask(intent) && (intent.hasExtra(EXTRA_SESSION) || reopenRecent())
             handleIntent(intent, freshPanel = true, reopened)
-        } else useContext = ScreenContext.text != null && savedInstanceState.getBoolean(STATE_USE_CONTEXT, false)
+        }
         setContent {
             val loaded by settingsRepo.settings.collectAsStateWithLifecycle(null)
             // Wait for the stored theme: no one-frame flash of the default theme.
@@ -128,13 +120,6 @@ class QuickActivity : ComponentActivity() {
                             IconBtn(R.drawable.dsw_right_up_outline, { open(vm.id) }, size = 40.dp, contentDescription = stringResource(R.string.open_in_app))
                             IconBtn(R.drawable.dsw_close_outline, { finish() }, size = 40.dp, contentDescription = stringResource(R.string.close))
                         }
-                        if (useContext && ScreenContext.packageName != null) Row(Modifier.padding(horizontal = 16.dp, vertical = 2.dp).clip(Radius.sm).background(c.selector)
-                            .pressable({ useContext = false }, Radius.sm).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            DIcon(R.drawable.dsw_fullscreen_outline, size = 12.dp, tint = c.labelSecondary)
-                            Text(stringResource(R.string.current_page, appLabel(ScreenContext.packageName!!)), style = DshType.xxs12, color = c.labelSecondary)
-                            DIcon(R.drawable.dsw_close_outline, size = 10.dp, tint = c.labelTertiary, contentDescription = stringResource(R.string.remove_attachment))
-                        }
                         if (!conv.isEmpty || live.running) {
                             // weight(fill = false): the stream gives way first, so the composer / approval buttons stay on screen.
                             ChatStream(conv, live, settings.workDetails, list, onInspect = { open(vm.id) }, onRetry = vm::retry, onContinue = { vm.continueTask() }, onOpenSettings = { openSettings(it) },
@@ -143,10 +128,7 @@ class QuickActivity : ComponentActivity() {
                         Box(Modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
                             ComposerSlot(vm, composer, settings, live, conv, hero = false, prepare = { text ->
                                 prefs.edit().putString(KEY_LAST, vm.id).putLong(KEY_AT, System.currentTimeMillis()).apply()
-                                val ctx = if (useContext && ScreenContext.text != null)
-                                    "[The user summoned you while looking at ${ScreenContext.packageName}. Screen content:]\n${ScreenContext.text}\n" else ""
-                                useContext = false
-                                if (ctx.isBlank()) text else "$ctx\n$text"
+                                text
                             }, listenRequest = listenRequest)
                         }
                     }
@@ -158,14 +140,7 @@ class QuickActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        captureContext(intent)
-        useContext = ScreenContext.text != null
         handleIntent(intent, freshPanel = false, reopened = true)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_USE_CONTEXT, useContext)
     }
 
     override fun onStop() {
@@ -174,11 +149,6 @@ class QuickActivity : ComponentActivity() {
     }
 
     private fun isShareOrTask(i: Intent) = i.action == Intent.ACTION_SEND || i.action == Intent.ACTION_SEND_MULTIPLE || i.action == ACTION_RUN_TASK
-
-    private fun captureContext(i: Intent) {
-        // A double tap on the floating ball captured the screen itself, before the ball was shown again.
-        if (!i.getBooleanExtra(EXTRA_FROM_ASSIST, false) && !i.getBooleanExtra(EXTRA_SCREEN, false) && i.action != ACTION_RUN_TASK) ScreenContext.captureFromAccessibility()
-    }
 
     /** Re-summoning after a dismiss shows the panel's last session if it is still running or was used in the last 10 minutes. */
     private fun reopenRecent(): Boolean {
@@ -270,7 +240,6 @@ class QuickActivity : ComponentActivity() {
         const val EXTRA_TASK = "task"
         /** Open this panel conversation (the floating ball while a run started here goes on). */
         const val EXTRA_SESSION = "session"
-        private const val STATE_USE_CONTEXT = "use_context"
         private const val KEY_LAST = "last_session"
         private const val KEY_AT = "last_at"
         private const val RECENT_MS = 10 * 60_000L

@@ -155,7 +155,7 @@ private fun ConversationPane(vm: HomeViewModel, onMenu: () -> Unit, onSettings: 
     }
 }
 
-/** dsh EmptyHero: centered whale + 所思托付，皆有归处 + 预览版 pill, composer docked at the bottom like BottomDock. No suggestion chips. */
+/** dsh EmptyHero: centered whale + 让一切成为可能 + 预览版 pill, composer docked at the bottom like BottomDock. No suggestion chips. */
 @Composable
 private fun EmptyHero(vm: HomeViewModel, composer: ComposerState, settings: Settings, live: SessionLive, conv: Conversation, onAutomation: () -> Unit, onSettings: (String?) -> Unit) {
     val c = Dsh.colors
@@ -203,7 +203,7 @@ fun ComposerSlot(vm: ConversationController, composer: ComposerState, settings: 
     val voice = io.github.markhunter123.muse.feature.voice.rememberVoiceInput(composer, {
         // Attachments still loading: leave the spoken text in the draft for a manual send.
         if (composer.pending == 0 && !composer.isEmpty) send()
-    }, credentials = { vm.tencentCredentials() })
+    }, autoSend = settings.voiceAutoSend, credentials = { vm.tencentCredentials() })
     val cardShown = live.takeover != null || live.permission != null || live.approval != null || live.question != null
     // A summon can land just before the panel switches to its recent session (a new composer, so a new
     // VoiceInput): a request taken in the last moment is replayed on the new one.

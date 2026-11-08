@@ -24,6 +24,7 @@ object Notifications {
     const val ID_MONITOR = 2
     const val ID_BALL = 3
     const val ID_UPDATE = 4
+    const val ID_WAKE = 6
     /** The group summary over several conversations' notifications. */
     const val ID_SESSIONS_SUMMARY = 5
 

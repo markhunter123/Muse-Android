@@ -33,6 +33,7 @@ dependencies {
     api(libs.shizuku.api)
     compileOnly(libs.shizuku.provider)
     implementation(libs.gson)
+    implementation(libs.androidx.annotation)
     api(libs.rikkax.parcelablelist)
     implementation(libs.hidden.compat)
     compileOnly(libs.hidden.stub)

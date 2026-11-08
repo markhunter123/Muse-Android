@@ -51,7 +51,8 @@ import kotlin.math.sqrt
 /**
  * Speech → composer text: the system recognizer streams partial results into the draft, and the
  * final result stays in the composer for the user to review and send themselves ([VoiceMachine]
- * with [VoiceMachine.autoSend] off — no countdown, nothing is sent).
+ * with [VoiceMachine.autoSend] off — no countdown, nothing is sent). With autoSend on it sends
+ * itself after a short editable countdown instead.
  *
  * Recognizer choice: Tencent Cloud one-shot ASR when [tencentCredentials] is configured (record
  * locally, one signed request, no partials), else the on-device recognizer (API 31+) when the
@@ -60,9 +61,11 @@ import kotlin.math.sqrt
  * some app, else the keyboard.
  */
 @Stable
-class VoiceInput internal constructor(private val context: Context, private val composer: ComposerState, private val scope: CoroutineScope) {
-    // autoSend off: the final text lands in the composer and the user sends it — no countdown, no auto-send.
-    private val machine = VoiceMachine(autoSend = false)
+class VoiceInput internal constructor(private val context: Context, private val composer: ComposerState, private val scope: CoroutineScope,
+                                      /** 语音自动发送 (settings): final text → [AUTO_SEND_COUNTDOWN_MS] countdown → onSend. */
+                                      private val autoSend: Boolean = false) {
+    private val machine = VoiceMachine(autoSend = autoSend,
+        countdownMs = if (autoSend) AUTO_SEND_COUNTDOWN_MS else VoiceMachine.COUNTDOWN_MS)
     var state: VoiceState by mutableStateOf(VoiceState.Idle)
         private set
     val active get() = state is VoiceState.Listening || state is VoiceState.Countdown
@@ -314,16 +317,19 @@ class VoiceInput internal constructor(private val context: Context, private val 
         private const val TICK_MS = 50L
         private const val ERROR_SHOWN_MS = 4000L
         private const val SAMPLE_RATE = 16_000
+        /** 语音自动发送 countdown (VoiceMachine's default 1.5 s is for the send-on-silence assistant path). */
+        const val AUTO_SEND_COUNTDOWN_MS = 3000L
         private val PREFERRED = listOf("com.google.android.googlequicksearchbox", "com.google.android.tts", "com.google.android.as")
     }
 }
 
 /** A [VoiceInput] writing into [composer]; [onSend] sends the composer as the Send button would. */
 @Composable
-fun rememberVoiceInput(composer: ComposerState, onSend: () -> Unit, credentials: () -> TencentAsr.Credentials? = { null }): VoiceInput {
+fun rememberVoiceInput(composer: ComposerState, onSend: () -> Unit, autoSend: Boolean = false,
+                       credentials: () -> TencentAsr.Credentials? = { null }): VoiceInput {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val voice = remember(composer) { VoiceInput(context, composer, scope) }
+    val voice = remember(composer, autoSend) { VoiceInput(context, composer, scope, autoSend) }
     val send by rememberUpdatedState(onSend)
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { voice.onPermission(it) }
     val activity = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { voice.onActivityResult(it.resultCode, it.data) }

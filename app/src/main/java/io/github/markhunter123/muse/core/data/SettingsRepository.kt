@@ -67,6 +67,10 @@ data class Settings(
     val allowExternalApps: Boolean = false,
     /** 唤起助手时直接语音输入: the assistant gesture opens the quick panel already listening. */
     val voiceOnAssist: Boolean = true,
+    /** 语音自动发送: recognition ends → 3 s countdown → the composer sends itself (off: draft only). */
+    val voiceAutoSend: Boolean = false,
+    /** 语音唤醒: a Vosk listener (WakeWordService) hears 你好 缪斯 while the floating ball shows. */
+    val wakeWord: Boolean = false,
     /** 在后台屏操作 App: with Shizuku, apps the agent opens run on its own virtual screen (AgentScreen). */
     val agentScreen: Boolean = true,
     /** 任务结束后自动总结经验: after a turn that worked in an app, one short model call distills App 经验 notes. */
@@ -124,6 +128,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val agentScreen = booleanPreferencesKey("agent_screen")
         val reflect = booleanPreferencesKey("reflect_experience")
         val voiceOnAssist = booleanPreferencesKey("voice_on_assist")
+        val voiceAutoSend = booleanPreferencesKey("voice_auto_send")
+        val wakeWord = booleanPreferencesKey("wake_word")
         val pluginRegistry = stringPreferencesKey("plugin_registry_mode")
         val pluginRegistryCustom = stringPreferencesKey("plugin_registry_custom")
         val mcpServers = stringPreferencesKey("mcp_servers_json")
@@ -156,6 +162,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         agentScreen = this[K.agentScreen] ?: true,
         reflectExperience = this[K.reflect] ?: true,
         voiceOnAssist = this[K.voiceOnAssist] ?: true,
+        voiceAutoSend = this[K.voiceAutoSend] ?: false,
+        wakeWord = this[K.wakeWord] ?: false,
         pluginRegistry = RegistryMode.of(this[K.pluginRegistry]),
         pluginRegistryCustom = this[K.pluginRegistryCustom] ?: "",
         mcpServers = decodeMcp(this[K.mcpServers]),
@@ -215,6 +223,8 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setAgentScreen(on: Boolean) = context.store.edit { it[K.agentScreen] = on }
     suspend fun setReflectExperience(on: Boolean) = context.store.edit { it[K.reflect] = on }
     suspend fun setVoiceOnAssist(on: Boolean) = context.store.edit { it[K.voiceOnAssist] = on }
+    suspend fun setVoiceAutoSend(on: Boolean) = context.store.edit { it[K.voiceAutoSend] = on }
+    suspend fun setWakeWord(on: Boolean) = context.store.edit { it[K.wakeWord] = on }
     suspend fun setAutoUpdateCheck(on: Boolean) = context.store.edit { it[K.autoUpdateCheck] = on }
 
     // ── 扩展 ──

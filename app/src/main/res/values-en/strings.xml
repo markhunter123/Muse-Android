@@ -66,7 +66,7 @@
     <string name="dur_s">%1$ds</string>
     <string name="dur_sep">" "</string>
     <string name="date_md">%1$d/%2$d</string>
-    <string name="hero_title">Into the Unknown</string>
+    <string name="hero_title">Making everything possible</string>
     <string name="composer_hint">Message or run a task, / commands</string>
     <string name="composer_hint_hero">Describe what you want your phone to do, / commands</string>
     <string name="plus_hint">Add files or run commands</string>
@@ -894,4 +894,12 @@
     <string name="upd_res_skipped">Skipped %1$s</string>
     <string name="upd_res_failed">Check failed: %1$s</string>
     <string name="upd_view">View</string>
+    <string name="voice_auto_send">Auto-send voice input</string>
+    <string name="voice_auto_send_desc">Sends 3 s after recognition; edit or cancel until then. Off, the text stays in the composer</string>
+    <string name="wake_word">Wake word</string>
+    <string name="wake_word_desc">Say "Hello Muse" (你好 缪斯) while the floating ball shows to start voice input. The ~42 MB offline model downloads on first enable</string>
+    <string name="wake_word_downloading">Downloading the offline model, %1$s / %2$s</string>
+    <string name="wake_word_downloading_unknown">Downloading the offline model, %1$s</string>
+    <string name="wake_word_failed">Model download failed; tap to retry</string>
+    <string name="wake_running">Wake word listening</string>
 </resources>

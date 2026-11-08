@@ -102,6 +102,8 @@ data class SessionLive(
     val queue: List<QueuedMessage> = emptyList(),
     /** Sent into the running turn, not yet logged by dsh (shown as pending bubbles under the stream). */
     val steers: List<SteerMessage> = emptyList(),
+    /** A fresh prompt the engine has not logged as its turn's `user/message` yet (shown like a steer until then). */
+    val pendingPrompt: SteerMessage? = null,
     /** Queued messages handed back to the composer after the run ended without sending them (stop / failure). */
     val restoredDraft: String? = null,
     val preset: PermissionPreset = PermissionPreset.Full,
@@ -143,22 +145,27 @@ data class SessionLive(
      * drops them, ENGINE-CONTRACT §2).
      */
     fun idle(): SessionLive = copy(
-        running = false, startingEngine = false, runStartedAt = null, waitingForUnlock = false, waitingForNetwork = false, queue = emptyList(), steers = emptyList(),
+        running = false, startingEngine = false, runStartedAt = null, waitingForUnlock = false, waitingForNetwork = false, queue = emptyList(), steers = emptyList(), pendingPrompt = null,
         restoredDraft = (listOfNotNull(restoredDraft) + steers.map { it.text } + queue.map { it.text }).joinToString("\n\n").ifEmpty { null },
     )
 
     fun withSteer(s: SteerMessage): SessionLive = copy(steers = steers + s)
+
+    /** A fresh prompt on its way to the engine: shown at once, replaced by the logged `user/message`. */
+    fun withPendingPrompt(m: SteerMessage): SessionLive = copy(pendingPrompt = m)
 
     /** The engine accepted steer [id] as [messageId]; already logged (its `user/message` came first) means delivered. */
     fun steerAccepted(id: String, messageId: String?): SessionLive =
         if (messageId != null && events.any { it.isUserMessage(messageId) }) copy(steers = steers.filterNot { it.id == id })
         else copy(steers = steers.map { if (it.id == id) it.copy(messageId = messageId) else it })
 
-    /** [e] was just logged: a steer it carries is now part of the conversation (no second bubble). */
+    /** [e] was just logged: a fresh prompt and a steer it carries are now part of the conversation (no second bubble). */
     fun withLogged(e: LoggedEvent): SessionLive {
-        if (e.type != "user/message" || steers.isEmpty()) return this
-        val id = e.data.s("id") ?: return this
-        return if (steers.none { it.messageId == id }) this else copy(steers = steers.filterNot { it.messageId == id })
+        if (e.type != "user/message") return this
+        val s = if (pendingPrompt != null) copy(pendingPrompt = null) else this
+        if (s.steers.isEmpty()) return s
+        val id = e.data.s("id") ?: return s
+        return if (s.steers.none { it.messageId == id }) s else s.copy(steers = s.steers.filterNot { it.messageId == id })
     }
 
     /**

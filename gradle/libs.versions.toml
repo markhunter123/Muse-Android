@@ -24,6 +24,14 @@ sqliteJdbc = "3.41.2.2"
 playServicesLocation = "21.4.0"
 pdfboxAndroid = "2.0.27.0"
 mlkitTextChinese = "16.0.1"
+voskAndroid = "0.3.47"
+jna = "5.13.0"
+gson = "2.13.1"
+parcelablelist = "2.0.1"
+hiddenApi = "4.4.0"
+refine = "4.4.0"
+bcpkix = "1.80"
+boringssl = "20250114"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -61,6 +69,16 @@ play-services-location = { module = "com.google.android.gms:play-services-locati
 pdfbox-android = { module = "com.tom-roush:pdfbox-android", version.ref = "pdfboxAndroid" }
 mlkit-text-chinese = { module = "com.google.mlkit:text-recognition-chinese", version.ref = "mlkitTextChinese" }
 markdown-m3 = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown" }
+vosk-android = { module = "com.alphacephei:vosk-android", version.ref = "voskAndroid" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+androidx-annotation = { module = "androidx.annotation:annotation", version = "1.3.0" }
+rikkax-parcelablelist = { module = "dev.rikka.rikkax.parcelablelist:parcelablelist", version.ref = "parcelablelist" }
+hidden-compat = { module = "dev.rikka.hidden:compat", version.ref = "hiddenApi" }
+hidden-stub = { module = "dev.rikka.hidden:stub", version.ref = "hiddenApi" }
+refine-runtime = { module = "dev.rikka.tools.refine:runtime", version.ref = "refine" }
+bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bcpkix" }
+ndk-boringssl = { module = "io.github.vvb2060.ndk:boringssl", version.ref = "boringssl" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -70,3 +88,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
+refine = { id = "dev.rikka.tools.refine", version.ref = "refine" }

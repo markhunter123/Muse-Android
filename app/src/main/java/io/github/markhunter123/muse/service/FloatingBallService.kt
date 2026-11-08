@@ -110,6 +110,9 @@ class FloatingBallService : Service() {
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         if (!Settings.canDrawOverlays(this)) { stopSelf(); return }
         wm = getSystemService(WindowManager::class.java)
+        // 语音唤醒 armed with the ball: the settings toggle starts it too, but a process restart
+        // (or the ball re-enabled) should bring the listener back without a visit to settings.
+        scope.launch { if (settings.current().wakeWord) WakeWordService.setEnabled(this@FloatingBallService, true) }
         val size = (48 * resources.displayMetrics.density).toInt()
         val margin = (8 * resources.displayMetrics.density).toInt()
         val screenH = screenSize(wm).second
@@ -375,8 +378,7 @@ class FloatingBallService : Service() {
         }
         scope.launch {
             hidingOverlays {
-                ScreenContext.captureFromAccessibility()
-                // Android 10 has no accessibility screenshot, and secure pages refuse one: the screen text still goes along.
+                // Android 10 has no accessibility screenshot, and secure pages refuse one.
                 ScreenContext.attachShot(runCatching { a11y.capture().bitmap }.getOrNull())
             }
             ActivityStarts.start(this@FloatingBallService, Intent(this@FloatingBallService, QuickActivity::class.java).putExtra(QuickActivity.EXTRA_SCREEN, true))
