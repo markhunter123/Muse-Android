@@ -2,7 +2,7 @@
 # DSH-Android native layer: libnode.so + libdshengine.so + libdshnode.so + Node addons for android arm64.
 #
 # Usage:  native/build.sh [stage...]
-#   stages: toolchain node headers engine launcher addons check   (default: all, in that order)
+#   stages: toolchain node headers engine launcher addons starter check   (default: all, in that order)
 #
 # Environment (all optional except NDK when not at the default location):
 #   NDK        Android NDK r29 root               (default: $WORK/android-ndk-r29)
@@ -22,6 +22,7 @@ REPO="$(cd "$HERE/.." && pwd)"
 WORK="${WORK:-$(cd "$REPO/.." && pwd)/toolchains}"
 NDK="${NDK:-$WORK/android-ndk-r29}"
 OUT="${OUT:-$WORK/out/arm64-v8a}"
+JNI_DIR="${JNI_DIR:-$WORK/out/jniLibs}"
 API="${API:-29}"
 JOBS="${JOBS:-$(nproc)}"
 HOST_CC="${HOST_CC:-clang}"
@@ -241,6 +242,34 @@ JSON
 }
 
 # ---------------------------------------------------------------------------
+# starter: libmuse_starter.so — the embedded Shizuku server launcher, exec'd by
+# root/adb to fork app_process (rikka.shizuku.server.ShizukuService). Compiled
+# straight with the NDK's clang++ (no cmake needed); flags mirror upstream's
+# manager jni CMakeLists Release config. Executables are named lib*.so so
+# targetSdk 29+ can exec them from the app's nativeLibraryDir.
+# ---------------------------------------------------------------------------
+stage_starter() {
+  log "starter"
+  local host
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*) host=windows-x86_64 ;;
+    Darwin*) host=darwin-x86_64 ;;
+    *) host=linux-x86_64 ;;
+  esac
+  local cc="$NDK/toolchains/llvm/prebuilt/$host/bin/aarch64-linux-android$API-clang++"
+  [ -x "$cc" ] || { echo "  NDK clang++ not found: $cc (install NDK r29 to $NDK, or set NDK=...)"; return 1; }
+  mkdir -p "$OUT"
+  "$cc" -std=c++17 -Os -fno-exceptions -fno-rtti -fno-threadsafe-statics \
+    -fdata-sections -ffunction-sections -fvisibility=hidden \
+    -Wl,--exclude-libs,ALL -Wl,--gc-sections -Wl,--strip-all \
+    "$HERE/starter/starter.cpp" "$HERE/starter/misc.cpp" "$HERE/starter/selinux.cpp" "$HERE/starter/cgroup.cpp" \
+    -llog -o "$OUT/libmuse_starter.so"
+  mkdir -p "$JNI_DIR/arm64-v8a"
+  cp "$OUT/libmuse_starter.so" "$JNI_DIR/arm64-v8a/libmuse_starter.so"
+  echo "  -> $JNI_DIR/arm64-v8a/libmuse_starter.so"
+}
+
+# ---------------------------------------------------------------------------
 # check: ELF / NEEDED / exported symbol sanity (no device needed).
 # ---------------------------------------------------------------------------
 stage_check() {
@@ -263,7 +292,13 @@ stage_check() {
     done
     llvm-readelf -n "$f" | grep -q 'NT_ANDROID_TYPE_IDENT' || { echo "  missing Android ident note"; bad=1; }
     llvm-readelf -l "$f" | awk '$1=="LOAD"{print $NF}' | sort -u | grep -qv 0x4000 && { echo "  LOAD align != 16K"; bad=1; }
-  done < <(find "$OUT" \( -name '*.so' -o -name '*.node' \) -not -name 'libc++_shared.so' | sort)
+  done < <(find "$OUT" \( -name '*.so' -o -name '*.node' \) -not -name 'libc++_shared.so' -not -name 'libmuse_starter.so' | sort)
+  if [ -f "$OUT/libmuse_starter.so" ]; then
+    # The starter is a PIE *executable* (PT_INTERP by design) — checked apart from the libs above.
+    llvm-readelf -h "$OUT/libmuse_starter.so" | grep -q 'Machine:.*AArch64' || { echo "  starter NOT AArch64"; bad=1; }
+    llvm-readelf -h "$OUT/libmuse_starter.so" | grep -q 'Type:.*DYN' || { echo "  starter is not PIE"; bad=1; }
+    echo "libmuse_starter.so: PIE AArch64 ok"
+  fi
   local sym syms
   syms="$(llvm-nm -D --defined-only "$OUT/libnode.so")"   # not piped into grep -q (SIGPIPE + pipefail)
   for sym in _ZN4node5StartEiPPc _ZNK4node14PrincipalRealm22builtin_module_requireEv napi_create_function; do
@@ -279,5 +314,5 @@ stage_check() {
   return $bad
 }
 
-stages=("$@"); [ ${#stages[@]} -gt 0 ] || stages=(toolchain node headers engine launcher addons check)
+stages=("$@"); [ ${#stages[@]} -gt 0 ] || stages=(toolchain node headers engine launcher addons starter check)
 for s in "${stages[@]}"; do "stage_$s"; done
