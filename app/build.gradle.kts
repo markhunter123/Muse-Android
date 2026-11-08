@@ -98,8 +98,17 @@ val fetchShizuku = tasks.register<Exec>("fetchShizuku") {
     inputs.file(script)
     outputs.dir(out.resolve("assets/shizuku"))
     if (System.getProperty("os.name").lowercase().contains("windows")) {
-        // Windows can't exec .sh directly; go through Git Bash. Forward slashes keep bash happy.
-        commandLine("bash", script.absolutePath.replace('\\', '/'), out.absolutePath.replace('\\', '/'))
+        // Windows can't exec .sh directly. Prefer Git Bash explicitly: bare "bash" on PATH can be
+        // WSL's, which cannot open D:/ style paths. Override with -Pdsh.bash=<path> if needed.
+        val bash = providers.gradleProperty("dsh.bash").orNull
+            ?: listOf(
+                "C:/Program Files/Git/bin/bash.exe",
+                "D:/Git/bin/bash.exe",
+                "D:/Git/usr/bin/bash.exe",
+                "C:/Program Files (x86)/Git/bin/bash.exe",
+            ).firstOrNull { File(it).isFile }
+            ?: "bash"
+        commandLine(bash, script.absolutePath.replace('\\', '/'), out.absolutePath.replace('\\', '/'))
     } else {
         commandLine(script.absolutePath, out.absolutePath)
     }
