@@ -13,3 +13,6 @@ secrets/
 app/schemas/
 /toolchains
 /.superpowers/
+.cxx/
+.kotlin/
+.claude/settings.local.json
