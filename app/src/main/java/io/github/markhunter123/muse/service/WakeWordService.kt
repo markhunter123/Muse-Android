@@ -31,14 +31,14 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.vosk.KaldiRecognizer
 import org.vosk.Model
+import org.vosk.Recognizer
 import javax.inject.Inject
 import kotlin.math.max
 
 /**
  * 语音唤醒 (Vosk, fully on-device): while the floating ball shows, an AudioRecord loop feeds a
- * grammar-restricted KaldiRecognizer watching for 「你好 缪斯」; a hit opens the quick panel
+ * grammar-restricted Recognizer watching for 「你好 缪斯」; a hit opens the quick panel
  * already listening ([QuickActivity.EXTRA_VOICE], the ball's long-press path).
  *
  * Started by the settings toggle and by [FloatingBallService]'s start; it watches the settings
@@ -92,7 +92,7 @@ class WakeWordService : Service() {
                 val s = settings.current()
                 if (!s.wakeWord || !s.floatingBall) { stopSelf(); return }
                 // A model that arrived (or vanished) mid-cycle reloads on the next listen.
-                if (inFront || wakeModel.dirForRecognizer() == null) { model?.release(); model = null; delay(1000); continue }
+                if (inFront || wakeModel.dirForRecognizer() == null) { model?.close(); model = null; delay(1000); continue }
                 // The recognizer loads the model once (a couple of seconds); keep it across listens.
                 model = model ?: runCatching { Model(wakeModel.dirForRecognizer()!!.absolutePath) }.getOrNull()
                 if (model == null) { delay(5000); continue }
@@ -104,7 +104,7 @@ class WakeWordService : Service() {
                 }
             }
         } finally {
-            model?.release()
+            model?.close()
         }
     }
 
@@ -112,7 +112,7 @@ class WakeWordService : Service() {
     private fun listenOnce(model: Model): Boolean {
         val min = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (min <= 0) return false
-        val rec = KaldiRecognizer(model, SAMPLE_RATE.toFloat(), """["$PHRASE"]""")
+        val rec = Recognizer(model, SAMPLE_RATE.toFloat(), """["$PHRASE"]""")
         var audio: AudioRecord? = null
         try {
             // A permission revoked mid-run (or a busy mic) lands here; no record, no listen, try again next cycle.
@@ -122,7 +122,7 @@ class WakeWordService : Service() {
             while (running && !inFront) {
                 val n = audio.read(buf, 0, buf.size)
                 if (n <= 0) continue
-                if (!rec.acceptWaveform(buf, n)) continue
+                if (!rec.acceptWaveForm(buf, n)) continue
                 val text = runCatching { Json.parseToJsonElement(rec.result).jsonObject["text"]?.jsonPrimitive?.content }.getOrNull().orEmpty()
                 if (PHRASE.replace(" ", "") in text.replace(" ", "")) return true
             }
