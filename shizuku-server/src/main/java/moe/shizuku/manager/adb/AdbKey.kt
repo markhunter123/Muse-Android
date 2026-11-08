@@ -38,7 +38,8 @@ import javax.net.ssl.X509ExtendedTrustManager
 
 private const val TAG = "AdbKey"
 
-class AdbKey(private val adbKeyStore: AdbKeyStore, name: String) {
+// MUSE: 增加 encryptionKey 注入参数，供 JVM 单测使用（设备上默认 null，走上游 AndroidKeyStore 路径，行为不变）。
+class AdbKey(private val adbKeyStore: AdbKeyStore, name: String, encryptionKeyOverride: Key? = null) {
 
     companion object {
 
@@ -78,7 +79,7 @@ class AdbKey(private val adbKeyStore: AdbKeyStore, name: String) {
     private val certificate: X509Certificate
 
     init {
-        this.encryptionKey = getOrCreateEncryptionKey() ?: error("Failed to generate encryption key with AndroidKeyManager.")
+        this.encryptionKey = encryptionKeyOverride ?: getOrCreateEncryptionKey() ?: error("Failed to generate encryption key with AndroidKeyManager.")
 
         this.privateKey = getOrCreatePrivateKey()
         this.publicKey = KeyFactory.getInstance("RSA").generatePublic(RSAPublicKeySpec(privateKey.modulus, RSAKeyGenParameterSpec.F4)) as RSAPublicKey

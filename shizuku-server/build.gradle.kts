@@ -37,9 +37,17 @@ android {
         // boringssl prefab（Task 9 的配对 JNI 链接用）
         prefab = true
     }
+
+    // MUSE: JVM 单测里 AdbKey init 会调 android.util.Log，用默认返回值兜底
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 kotlin { jvmToolchain(21) }
+
 
 dependencies {
     // BinderContainer 等在 api 工件里，server 代码直接引用
@@ -56,4 +64,6 @@ dependencies {
     // AdbKey 解析与配对密码学（Task 9/10 用，一次加齐）
     implementation(libs.bouncycastle.bcpkix)
     implementation(libs.ndk.boringssl)
+
+    testImplementation(libs.junit)
 }
