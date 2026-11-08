@@ -37,8 +37,15 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <!-- Voice input in the composer (system SpeechRecognizer); asked for on the first mic tap. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- 语音唤醒 (WakeWordService): a microphone FGS listening for 你好 缪斯 while the floating ball shows. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <!-- AlarmClock.ACTION_SET_ALARM / ACTION_SET_TIMER handlers (DeskClock HandleApiCalls) require it. -->
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
+    <!-- MUSE: embedded Shizuku server treats this app as the manager — declare AND request the
+         manager permission so BinderSender's requestedPermissions scan routes the binder here. -->
+    <permission android:name="io.github.markhunter123.muse.permission.MANAGER" android:protectionLevel="normal" />
+    <uses-permission android:name="io.github.markhunter123.muse.permission.MANAGER" />
 
     <queries>
         <intent><action android:name="android.intent.action.MAIN" /></intent>
@@ -216,6 +223,12 @@
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Shows the user-enabled floating button that opens the assistant." />
         </service>
+
+        <!-- 语音唤醒 (Vosk): hears 「你好 缪斯」while the floating ball shows, opens the panel listening. -->
+        <service
+            android:name=".service.WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <service
             android:name=".service.DshAccessibilityService"
