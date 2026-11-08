@@ -73,6 +73,8 @@ data class Settings(
     val wakeWord: Boolean = false,
     /** 在后台屏操作 App: with Shizuku, apps the agent opens run on its own virtual screen (AgentScreen). */
     val agentScreen: Boolean = true,
+    /** shell 权限（嵌入式 server）: 允许用 root 自动启动 muse_server（设置页的开关，Task 8 接 UI）。 */
+    val shellRoot: Boolean = false,
     /** 任务结束后自动总结经验: after a turn that worked in an app, one short model call distills App 经验 notes. */
     val reflectExperience: Boolean = true,
     /** Third-party OpenAI-compatible providers (keys live in SecretStore, never here). */
@@ -126,6 +128,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         val alwaysAllow = stringSetPreferencesKey("always_allow_tools")
         val externalApps = booleanPreferencesKey("allow_external_apps")
         val agentScreen = booleanPreferencesKey("agent_screen")
+        val shellRoot = booleanPreferencesKey("shell_root")
         val reflect = booleanPreferencesKey("reflect_experience")
         val voiceOnAssist = booleanPreferencesKey("voice_on_assist")
         val voiceAutoSend = booleanPreferencesKey("voice_auto_send")
@@ -160,6 +163,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
         alwaysAllowTools = this[K.alwaysAllow] ?: emptySet(),
         allowExternalApps = this[K.externalApps] ?: false,
         agentScreen = this[K.agentScreen] ?: true,
+        shellRoot = this[K.shellRoot] ?: false,
         reflectExperience = this[K.reflect] ?: true,
         voiceOnAssist = this[K.voiceOnAssist] ?: true,
         voiceAutoSend = this[K.voiceAutoSend] ?: false,
@@ -221,6 +225,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun removeAlwaysAllowTool(tool: String) = context.store.edit { it[K.alwaysAllow] = (it[K.alwaysAllow] ?: emptySet()) - tool }
     suspend fun setAllowExternalApps(on: Boolean) = context.store.edit { it[K.externalApps] = on }
     suspend fun setAgentScreen(on: Boolean) = context.store.edit { it[K.agentScreen] = on }
+    suspend fun setShellRoot(on: Boolean) = context.store.edit { it[K.shellRoot] = on }
     suspend fun setReflectExperience(on: Boolean) = context.store.edit { it[K.reflect] = on }
     suspend fun setVoiceOnAssist(on: Boolean) = context.store.edit { it[K.voiceOnAssist] = on }
     suspend fun setVoiceAutoSend(on: Boolean) = context.store.edit { it[K.voiceAutoSend] = on }
