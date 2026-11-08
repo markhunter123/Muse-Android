@@ -49,16 +49,20 @@ import io.github.markhunter123.muse.core.designsystem.Tag
 import io.github.markhunter123.muse.core.designsystem.Tone
 import io.github.markhunter123.muse.core.platform.Browser
 import io.github.markhunter123.muse.core.platform.ShellAccess
+import io.github.markhunter123.muse.core.platform.ShellServerController
 import io.github.markhunter123.muse.core.platform.ShellState
 import io.github.markhunter123.muse.core.platform.ShizukuInstallState
 import io.github.markhunter123.muse.core.platform.ShizukuInstaller
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
-interface ShellAccessEntryPoint { fun shellAccess(): ShellAccess; fun shizukuInstaller(): ShizukuInstaller }
+interface ShellAccessEntryPoint { fun shellAccess(): ShellAccess; fun shizukuInstaller(): ShizukuInstaller; fun shellServerController(): ShellServerController }
 
 fun shellAccessOf(context: Context): ShellAccess =
     EntryPointAccessors.fromApplication(context.applicationContext, ShellAccessEntryPoint::class.java).shellAccess()
+
+fun shellServerControllerOf(context: Context): ShellServerController =
+    EntryPointAccessors.fromApplication(context.applicationContext, ShellAccessEntryPoint::class.java).shellServerController()
 
 fun shizukuInstallerOf(context: Context): ShizukuInstaller =
     EntryPointAccessors.fromApplication(context.applicationContext, ShellAccessEntryPoint::class.java).shizukuInstaller()

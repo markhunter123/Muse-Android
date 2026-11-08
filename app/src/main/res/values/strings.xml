@@ -524,6 +524,14 @@
     <string name="shz_versions">Shizuku %1$s · 服务 API %2$s</string>
     <string name="shz_server_down">未运行</string>
     <string name="shz_group">增强能力 · Shizuku</string>
+    <!-- MUSE: 内嵌 shell server 卡（手机权限页，实验；Task 16 拆官方路径后它成为唯一入口） -->
+    <string name="shell_server_title">shell 权限（实验）</string>
+    <string name="shell_server_root_hint">已 root 的手机可一键启动内嵌服务；重启手机后会失效，回来再点一次即可。</string>
+    <string name="shell_server_manual_hint">无 root：在电脑上用 adb 执行一次启动命令；重启手机后需重新执行。</string>
+    <string name="shell_server_manual_copy">复制手动启动命令</string>
+    <string name="shell_server_start">启动</string>
+    <string name="shell_server_starting">正在启动…</string>
+    <string name="shell_server_start_failed">启动失败</string>
     <string name="shz_strip">需要 Shizuku</string>
     <string name="shz_jit_body">“%1$s”要用 Shizuku 才能直接完成。准备好后会自动继续。</string>
     <string name="shz_title_install">用 Shizuku 解锁更多能力</string>

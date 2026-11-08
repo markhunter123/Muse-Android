@@ -520,6 +520,7 @@ private fun PhoneSection(vm: SettingsViewModel, onNotificationApps: () -> Unit) 
     }
     SettingsGroupTitle(stringResource(R.string.shz_group))
     ShellAccessCard()
+    ShellServerCard()
     val s by vm.settings.collectAsStateWithLifecycle()
     SettingsCard(Modifier.padding(top = 8.dp)) {
         SettingsRow(stringResource(R.string.agent_screen_setting), stringResource(R.string.agent_screen_setting_desc), divider = false,

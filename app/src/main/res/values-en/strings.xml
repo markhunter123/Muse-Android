@@ -524,6 +524,14 @@
     <string name="shz_versions">Shizuku %1$s · server API %2$s</string>
     <string name="shz_server_down">not running</string>
     <string name="shz_group">Enhanced access · Shizuku</string>
+    <!-- MUSE: embedded shell server card (Phone permissions, experimental; becomes the only entry once the official path is removed) -->
+    <string name="shell_server_title">Shell access (experimental)</string>
+    <string name="shell_server_root_hint">On a rooted phone, start the embedded service in one tap; it stops at reboot — tap again.</string>
+    <string name="shell_server_manual_hint">Without root: run one adb start command on a computer; repeat after a phone reboot.</string>
+    <string name="shell_server_manual_copy">Copy manual start command</string>
+    <string name="shell_server_start">Start</string>
+    <string name="shell_server_starting">Starting…</string>
+    <string name="shell_server_start_failed">Start failed</string>
     <string name="shz_strip">Shizuku needed</string>
     <string name="shz_jit_body">“%1$s” needs Shizuku to do this directly. It continues by itself once ready.</string>
     <string name="shz_title_install">Unlock more with Shizuku</string>

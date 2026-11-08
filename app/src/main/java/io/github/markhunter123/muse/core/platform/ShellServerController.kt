@@ -47,12 +47,21 @@ class ShellServerController @Inject constructor(
     private val _connection = MutableStateFlow(ConnectionStatus.IDLE)
     val connection: StateFlow<ConnectionStatus> = _connection.asStateFlow()
 
-    /** 确保 server 在跑：先看现状；开了 root 启动就拉起，再等 binder。返回启动后的 [ShellState]。 */
+    /** 确保 server 在跑：先看现状；开了 root 自启（shellRoot）才拉起。给开机自启等自动路径用。 */
     suspend fun ensureRunning(): ShellState = withContext(Dispatchers.IO) {
         val current = shell.refresh()
         if (current.ready) return@withContext current
         if (!settings.current().shellRoot) return@withContext current
+        startRoot()
+    }
 
+    /** 设置页按钮的显式启动：点击本身就是意图，不走 shellRoot 门禁。 */
+    suspend fun startViaRoot(): ShellState = withContext(Dispatchers.IO) {
+        if (shell.refresh().ready) return@withContext shell.state.value
+        startRoot()
+    }
+
+    private suspend fun startRoot(): ShellState {
         _connection.value = ConnectionStatus.CONNECTING
         val info = context.applicationInfo
         val inner = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir)
@@ -69,12 +78,12 @@ class ShellServerController @Inject constructor(
         while (System.currentTimeMillis() < deadline) {
             if (runCatching { Shizuku.pingBinder() }.getOrDefault(false)) {
                 _connection.value = ConnectionStatus.IDLE
-                return@withContext shell.refresh()
+                return shell.refresh()
             }
             delay(1_000)
         }
         _connection.value = ConnectionStatus.FAILED
-        shell.refresh()
+        return shell.refresh()
     }
 
     /** 给 UI 复制的手动启动命令（adb shell …）。 */
