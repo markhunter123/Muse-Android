@@ -39,7 +39,8 @@ public class ShizukuConfigManager extends ConfigManager {
 
     private static final long WRITE_DELAY = 10 * 1000;
 
-    private static final File FILE = new File("/data/user_de/0/com.android.shell/shizuku.json");
+    // MUSE: separate file from the official server's shizuku.json (both servers may coexist)
+    private static final File FILE = new File("/data/user_de/0/com.android.shell/muse_shizuku.json");
     private static final AtomicFile ATOMIC_FILE = new AtomicFile(FILE);
 
     public static ShizukuConfig load() {

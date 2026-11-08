@@ -29,7 +29,8 @@ public class BinderSender {
 
     private static final Logger LOGGER = new Logger("BinderSender");
 
-    private static final String PERMISSION_MANAGER = "moe.shizuku.manager.permission.MANAGER";
+    // MUSE: our own manager permission instead of the official app's
+    private static final String PERMISSION_MANAGER = "io.github.markhunter123.muse.permission.MANAGER";
     private static final String PERMISSION = "moe.shizuku.manager.permission.API_V23";
 
     private static ShizukuService sShizukuService;

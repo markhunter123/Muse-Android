@@ -92,7 +92,8 @@ public class ServiceStarter {
     }
 
     private static boolean sendBinder(IBinder binder, String token, boolean retry) {
-        String packageName = "moe.shizuku.privileged.api";
+        // MUSE: user service binder goes back to Muse's provider (we are the manager)
+        String packageName = "io.github.markhunter123.muse";
         String name = packageName + ".shizuku";
         int userId = 0;
         IContentProvider provider = null;
