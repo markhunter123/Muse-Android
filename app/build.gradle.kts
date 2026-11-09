@@ -7,12 +7,6 @@ plugins {
     alias(libs.plugins.room)
 }
 
-val thirdPartyOut: String = providers.gradleProperty("dsh.thirdPartyOut").orElse("../toolchains/out/third-party").get()
-
-fun shizukuPin(name: String): String =
-    Regex("^$name=(\\S+)$", RegexOption.MULTILINE).find(rootProject.file("tools/fetch-shizuku.sh").readText())?.groupValues?.get(1)
-        ?: error("tools/fetch-shizuku.sh: missing $name pin")
-
 android {
     namespace = "io.github.markhunter123.muse"
     compileSdk {
@@ -26,9 +20,6 @@ android {
         versionCode = 27
         versionName = "1.0.1"
         ndk { abiFilters += "arm64-v8a" }
-        // Bundled official Shizuku APK (in-app install/update); pinned in tools/fetch-shizuku.sh.
-        buildConfigField("String", "SHIZUKU_VERSION", "\"${shizukuPin("VERSION")}\"")
-        buildConfigField("long", "SHIZUKU_VERSION_CODE", "${shizukuPin("VERSION_CODE")}L")
     }
 
     // Release signing comes from Gradle properties (e.g. ~/.gradle/gradle.properties or -P), never from the repo:
@@ -88,35 +79,6 @@ android {
     // native/build.sh and js/build-engine.sh. Point these at their output directories.
     sourceSets["main"].jniLibs.directories += providers.gradleProperty("dsh.nativeOut").orElse("../toolchains/out/jniLibs").get()
     sourceSets["main"].assets.directories += providers.gradleProperty("dsh.engineOut").orElse("../toolchains/out/engine").get()
-    // assets/shizuku/{shizuku.apk,LICENSE}, written by tools/fetch-shizuku.sh (task fetchShizuku below).
-    sourceSets["main"].assets.directories += "$thirdPartyOut/assets"
-}
-
-// Downloads + verifies (sha256 and signing cert) the pinned Shizuku release; a no-op once it is there.
-// -Pdsh.fetchShizuku=false skips it: the app then falls back to Play Store / GitHub for installing Shizuku.
-val fetchShizuku = tasks.register<Exec>("fetchShizuku") {
-    val script = rootProject.file("tools/fetch-shizuku.sh")
-    val out = file(thirdPartyOut)
-    inputs.file(script)
-    outputs.dir(out.resolve("assets/shizuku"))
-    if (System.getProperty("os.name").lowercase().contains("windows")) {
-        // Windows can't exec .sh directly. Prefer Git Bash explicitly: bare "bash" on PATH can be
-        // WSL's, which cannot open D:/ style paths. Override with -Pdsh.bash=<path> if needed.
-        val bash = providers.gradleProperty("dsh.bash").orNull
-            ?: listOf(
-                "C:/Program Files/Git/bin/bash.exe",
-                "D:/Git/bin/bash.exe",
-                "D:/Git/usr/bin/bash.exe",
-                "C:/Program Files (x86)/Git/bin/bash.exe",
-            ).firstOrNull { File(it).isFile }
-            ?: "bash"
-        commandLine(bash, script.absolutePath.replace('\\', '/'), out.absolutePath.replace('\\', '/'))
-    } else {
-        commandLine(script.absolutePath, out.absolutePath)
-    }
-}
-if (providers.gradleProperty("dsh.fetchShizuku").orElse("true").get().toBoolean()) {
-    tasks.named("preBuild") { dependsOn(fetchShizuku) }
 }
 
 kotlin { jvmToolchain(21) }

@@ -3,7 +3,6 @@ package io.github.markhunter123.muse.core.platform
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.provider.Settings
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -180,24 +179,11 @@ class ShellAccess @Inject constructor(@ApplicationContext private val context: C
 
     fun developerOptionsIntent(): Intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-    /** 打开官方 Shizuku 管理器（共存期用；Task 16 拆官方路径时删除）。 */
-    fun launchIntent(): Intent? = context.packageManager.getLaunchIntentForPackage(PACKAGE)
-
-    /** 官方管理器的应用商店页；解析不到商店时为 null（调用方回退 GitHub releases）。 */
-    fun playStoreIntent(): Intent? = runCatching {
-        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$PACKAGE")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            .takeIf { context.packageManager.queryIntentActivities(it, 0).isNotEmpty() }
-    }.getOrNull()
-
     companion object {
         const val REQUEST_CODE = 7
         const val MIN_VERSION = 11
         private const val KEY_WAS_READY = "was_ready"
         private const val KEY_LEGACY_WAS_READY = "legacy_was_ready"
         private const val KEY_BOOT_TIP = "boot_tip_dismissed"
-
-        // ---- 官方路径残留（launchIntent/playStoreIntent/PACKAGE/RELEASES_URL；Task 15/16 拆除） ----
-        const val PACKAGE = "moe.shizuku.privileged.api"
-        const val RELEASES_URL = "https://github.com/RikkaApps/Shizuku/releases/latest"
     }
 }

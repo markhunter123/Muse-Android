@@ -484,7 +484,7 @@ S = [
 ("set_web_group", "网页", "Web"),
 ("about_disclaimer_title", "声明", "Disclaimer"),
 ("about_oss_title", "开源许可", "Open-source licenses"),
-("about_oss_shizuku", "内置 Shizuku %1$s（RikkaApps，Apache License 2.0），官方未修改的安装包，仅用于一键安装。点按查看许可证。", "Includes Shizuku %1$s (RikkaApps, Apache License 2.0), the official unmodified APK, used only for one-tap install. Tap to view the license."),
+("about_oss_shizuku", "内嵌 Shizuku server 与 Shizuku 客户端库（RikkaApps，Apache License 2.0）。", "Includes the embedded Shizuku server and the Shizuku client library (RikkaApps, Apache License 2.0)."),
 ("web_sign_in_title", "登录 DeepSeek", "Sign in to DeepSeek"),
 ("web_platform_title", "DeepSeek 开放平台", "DeepSeek Platform"),
 ("web_load_failed", "页面加载失败，请检查网络后重试。", "Could not load the page. Check your network and try again."),

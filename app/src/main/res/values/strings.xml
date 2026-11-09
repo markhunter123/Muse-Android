@@ -665,7 +665,7 @@
     <string name="set_web_group">网页</string>
     <string name="about_disclaimer_title">声明</string>
     <string name="about_oss_title">开源许可</string>
-    <string name="about_oss_shizuku">内置 Shizuku %1$s（RikkaApps，Apache License 2.0），官方未修改的安装包，仅用于一键安装。点按查看许可证。</string>
+    <string name="about_oss_shizuku">内嵌 Shizuku server 与 Shizuku 客户端库（RikkaApps，Apache License 2.0）。</string>
     <string name="web_sign_in_title">登录 DeepSeek</string>
     <string name="web_platform_title">DeepSeek 开放平台</string>
     <string name="web_load_failed">页面加载失败，请检查网络后重试。</string>

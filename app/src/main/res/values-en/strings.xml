@@ -665,7 +665,7 @@
     <string name="set_web_group">Web</string>
     <string name="about_disclaimer_title">Disclaimer</string>
     <string name="about_oss_title">Open-source licenses</string>
-    <string name="about_oss_shizuku">Includes Shizuku %1$s (RikkaApps, Apache License 2.0), the official unmodified APK, used only for one-tap install. Tap to view the license.</string>
+    <string name="about_oss_shizuku">Includes the embedded Shizuku server and the Shizuku client library (RikkaApps, Apache License 2.0).</string>
     <string name="web_sign_in_title">Sign in to DeepSeek</string>
     <string name="web_platform_title">DeepSeek Platform</string>
     <string name="web_load_failed">Could not load the page. Check your network and try again.</string>

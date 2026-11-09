@@ -19,7 +19,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesPermission" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-    <!-- Installs/updates the bundled official Shizuku APK (PackageInstaller session). -->
+    <!-- In-app self-updates (PackageInstaller session, AppUpdater). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -49,8 +49,7 @@
 
     <queries>
         <intent><action android:name="android.intent.action.MAIN" /></intent>
-        <!-- Shizuku manager (shell access) and Play Store (to install it). -->
-        <package android:name="moe.shizuku.privileged.api" />
+        <!-- Play Store (market:// handler lookups). -->
         <package android:name="com.android.vending" />
         <!-- Vendor keep-alive screens (RomKeepAlive; RomKeepAliveTest keeps this list in sync). -->
         <package android:name="com.coloros.oppoguardelf" />

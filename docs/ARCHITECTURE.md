@@ -160,7 +160,7 @@ dsh-base 自带 DeepSeek 账号 provider（OAuth + PKCE，凭据存在 `DSH_HOME
 ## 应用内更新（core/update/）
 
 - 不在 Google Play 上分发，更新走 GitHub Releases：每个版本附带 `update.json`（`tools/make-update-manifest.py` 从 APK 生成，同一份提交为 `update/latest.json`），发布步骤见 [发布流程](RELEASE.md)。
-- `AppUpdater`（单例，`DshApp` 启动时 `start()`）：从 GitHub Release、raw.githubusercontent.com 和 jsDelivr 依次错开请求清单（`firstSuccess`，先到的有效清单生效），自动检查每天最多一次；`ApkDownloader` 断点续传到 `cacheDir/update/`，SHA-256 不符换下一个地址；`ApkCheck` 用 `getPackageArchiveInfo` 核对包名、versionCode 和签名证书（与已安装的 App 比，不只看清单）；最后像 `ShizukuInstaller` 一样用 `PackageInstaller` 会话安装。
+- `AppUpdater`（单例，`DshApp` 启动时 `start()`）：从 GitHub Release、raw.githubusercontent.com 和 jsDelivr 依次错开请求清单（`firstSuccess`，先到的有效清单生效），自动检查每天最多一次；`ApkDownloader` 断点续传到 `cacheDir/update/`，SHA-256 不符换下一个地址；`ApkCheck` 用 `getPackageArchiveInfo` 核对包名、versionCode 和签名证书（与已安装的 App 比，不只看清单）；最后用 `PackageInstaller` 会话安装。
 - 界面：`feature/update/UpdateUi.kt` 的提示弹窗挂在 `MainActivity` 上（对话框自带返回处理，不加 BackHandler），设置 → 关于有“检查更新”和“自动检查更新”。
 
 ## 存储
@@ -179,5 +179,5 @@ js/build-engine.sh                # engine.zip + engine.sha256 → $OUT_DIR
 
 - 原生库：`native/build.sh` 交叉编译 Node 24.22.1（`--shared --dest-os=android`，Termux 补丁加少量自有补丁）、JNI 包装 `libdshengine.so`、flock 和 node-pty 两个插件（打包为 `libdsh_flock.so`、`libdsh_pty.so`）。产物以 GitHub Release 发布，tag 是 `native-node<版本>-<输入哈希>`。`librg.so` 是上游的 ripgrep 二进制。
 - 引擎包：用 npm 按 lockfile 安装锁定版本的 dsh，复制 `js/packages/*`（含 vendored 的 `@snnh/dsh-llm-service-lite`，其依赖必须已在 lockfile 树里且版本满足），打 `js/patches/*`，裁剪掉用不到的包，校验没有符号链接，生成确定性的 zip。
-- Gradle 属性：`dsh.nativeOut`（默认 `toolchains/out/jniLibs`）、`dsh.engineOut`（默认 `toolchains/out/engine`，即 build-engine.sh 的输出目录）、`dsh.thirdPartyOut`（Shizuku APK，默认 `toolchains/out/third-party`）、`dsh.fetchShizuku=false`（不内置 Shizuku）。在 arm64 Linux 主机上构建时需要传 `-Pandroid.aapt2FromMavenOverride=<arm64 aapt2>`。`toolchains/` 已被 gitignore。
+- Gradle 属性：`dsh.nativeOut`（默认 `toolchains/out/jniLibs`）、`dsh.engineOut`（默认 `toolchains/out/engine`，即 build-engine.sh 的输出目录）。在 arm64 Linux 主机上构建时需要传 `-Pandroid.aapt2FromMavenOverride=<arm64 aapt2>`。`toolchains/` 已被 gitignore。
 - 技术栈：Kotlin、Compose + Material 3、Hilt、Room、DataStore、kotlinx.serialization、Coil 3、multiplatform-markdown-renderer、Shizuku API、Play services location（只用于地理围栏）、pdfbox-android。
