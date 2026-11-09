@@ -485,6 +485,8 @@ S = [
 ("about_disclaimer_title", "声明", "Disclaimer"),
 ("about_oss_title", "开源许可", "Open-source licenses"),
 ("about_oss_shizuku", "内嵌 Shizuku server 与 Shizuku 客户端库（RikkaApps，Apache License 2.0）。", "Includes the embedded Shizuku server and the Shizuku client library (RikkaApps, Apache License 2.0)."),
+("shz_migration_title", "不再需要官方 Shizuku", "The official Shizuku app is no longer needed"),
+("shz_migration_body", "Muse 已内置 shell 服务且工作正常，官方 Shizuku App 可以卸载了。", "Muse ships its own shell service and it is working; you can uninstall the official Shizuku app now."),
 ("web_sign_in_title", "登录 DeepSeek", "Sign in to DeepSeek"),
 ("web_platform_title", "DeepSeek 开放平台", "DeepSeek Platform"),
 ("web_load_failed", "页面加载失败，请检查网络后重试。", "Could not load the page. Check your network and try again."),

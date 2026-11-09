@@ -569,6 +569,8 @@
     <string name="shz_onb_desc">Most things already work. Set up shell access if you want Muse to flip system switches directly.</string>
     <string name="shz_onb_done">Done</string>
     <string name="shz_onb_later">You can also do this later in Settings → Phone; Muse will offer it when a task needs it.</string>
+    <string name="shz_migration_title">The official Shizuku app is no longer needed</string>
+    <string name="shz_migration_body">Muse ships its own shell service and it is working; you can uninstall the official Shizuku app now.</string>
     <string name="version">Version %1$s</string>
     <string name="engine">Agent engine</string>
     <string name="engine_ready">Running</string>

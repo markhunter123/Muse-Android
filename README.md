@@ -24,7 +24,7 @@
 ## 亮点
 
 - **手机上的 App 都能操作**：用微信发消息、总结群聊，抓取小红书上的内容，在 BOSS 直聘上直接投递、打招呼，去淘宝帮你下单，等等。
-- **它操作，你照常用手机**：授权后 Agent 能读屏、点按、输入，过程中你可以随时暂停、停止或插话。Android 14 及以上支持“不打扰模式”：配好 Shizuku 或自连 ADB 后，Agent 在虚拟屏幕上操作，不占用你的屏幕。
+- **它操作，你照常用手机**：授权后 Agent 能读屏、点按、输入，过程中你可以随时暂停、停止或插话。Android 14 及以上支持“不打扰模式”：配好 shell 权限后，Agent 在虚拟屏幕上操作，不占用你的屏幕。
 - **在任何 App 里随时呼起**：用悬浮球直接对话、派活，也可以把当前这一屏发给它，问“这条怎么回”“帮我记下来”。
 - **手机里自带 Linux 环境**：Agent 可以跑 Python、处理你发来的文件、运行它自己写的脚本。
 - **出门也能用电脑上的 Agent**：通过 SSH 或 dsh Remote 连接电脑或服务器上的 dsh。只用远程模式的话，手机不用安装本地运行环境。
@@ -38,7 +38,7 @@
 1. 从 [Releases](../../releases/latest) 下载 APK 并安装（arm64，Android 10 及以上）。
 2. 登录 DeepSeek 账号，或者填入 [API key](https://platform.deepseek.com/api_keys)；也可以在 设置 → 模型服务 里添加其他服务商。
 3. 直接说要做什么，比如“列出下载目录里最大的 5 个文件”。用到某项权限时，App 会再引导你开启。
-4. 可选：在 设置 → 手机权限 里一键安装 Shizuku，并在 Shizuku 里打开“开机启动（无线调试）”。
+4. 可选：在 设置 → 手机权限 里完成无线调试配对，解锁系统设置等系统级操作；配对一次后开机自启。
 
 ## 能做什么
 
@@ -48,7 +48,7 @@
 - **自动化**：定时执行，或在连上 Wi‑Fi/蓝牙、开始充电、到达某地、收到通知等条件下触发。
 - **其他模型服务**：除 DeepSeek 外，可添加 OpenAI、Claude、Gemini、Grok、OpenRouter、Kimi、智谱 GLM、通义千问、火山方舟、MiniMax、硅基流动、阶跃星辰，或任意 OpenAI 兼容接口；填 key、拉取模型列表即可在模型选择器里切换。
 - **完整的 dsh**：dsh 原样运行（没有 fork），技能、MCP、子 agent、网页搜索都能用。
-- **不需要 root 或 Termux**：装一个 APK 就能用；Shizuku 可选，能解锁更多系统开关。
+- **不需要 root 或 Termux**：装一个 APK 就能用；shell 权限可选，能解锁更多系统开关。
 
 ## 架构
 
@@ -64,7 +64,7 @@ flowchart LR
     NODE["libnode.so<br/>Node 24 · bionic"]
     DSH["dsh --profile android<br/>+ device / guard / account 插件"]
   end
-  SHZ["Shizuku（可选）"]
+  SHZ["内嵌 shell 服务（可选）"]
   API["DeepSeek API"]
 
   UI <-- "dsh SDK JSON-RPC（stdio）" --> DSH
@@ -102,7 +102,7 @@ Muse-Android 不在 Google Play 上分发，又用到了无障碍、通知读取
 ## 当前限制
 
 - **锁屏后不能操作其他 App**：在有安全锁屏的情况下，系统不允许操作其他 App 的界面。这类任务会暂停，提示你解锁后继续。系统 API 类的任务（文件、设置、通知等）锁屏时照常执行。
-- **Shizuku 重启后要重新启动**：建议打开 Shizuku 的“开机启动（无线调试）”（需要 Shizuku 13.6 及以上、Android 11 及以上）。
+- **shell 服务自启**：无线调试配对一次后开机自启，覆盖安装（App 更新）后回到前台也会自动重启；无线配对需要 Android 11 及以上，Android 10 可用 root 或手动 adb 命令启动。
 - **国产 ROM**：部分机型需要手动允许“后台弹出界面”和“自启动”，悬浮球和后台自动化才能稳定工作。App 的体检页会提示你。
 - **第三方模型**：只支持 OpenAI 兼容的 Chat Completions 接口（HTTPS）；上下文统一按 128K 计，不提供推理等级选择；联网搜索由 DeepSeek 提供，使用第三方模型时需要另外配置 DeepSeek API key。工具调用的效果取决于所选模型。
 - **冷启动**：引擎冷启动目前大约 5 秒，还在优化。
@@ -175,7 +175,7 @@ docs/       架构说明、引擎契约、设计 token、截图
 - [jackwener/DSH-Android](https://github.com/jackwener/DSH-Android)（Apache-2.0）：本项目基于它 fork，仅改名与换图标
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)：agent 引擎
 - [Node.js](https://nodejs.org)；安卓构建参考了 [Termux](https://github.com/termux/termux-packages) 和 [nodejs-mobile](https://github.com/nodejs-mobile/nodejs-mobile) 的做法
-- [Shizuku](https://github.com/RikkaApps/Shizuku)（Apache-2.0）：App 内置了官方安装包
+- [Shizuku](https://github.com/RikkaApps/Shizuku)（Apache-2.0）：内嵌 Shizuku server 组件（vendor 自 b844bc491f1790c72328e1a8e5b2349f8978f0ea）与客户端库
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
 - [dsh-llm-service-lite](https://github.com/snnh/dsh-llm-service-lite)（MIT，snnh）：第三方模型适配器，原样内置于 `js/packages/llm-service-lite/`
 - [magpie](https://github.com/yetone/magpie)（MIT）：服务商预设地址和接入 dsh 的经验（按协议分组、maxTokens 与压缩阈值）

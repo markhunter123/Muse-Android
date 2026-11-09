@@ -569,6 +569,8 @@
     <string name="shz_onb_desc">大部分功能现在就能用。想让 Muse 直接切换系统开关，可以配好 shell 权限。</string>
     <string name="shz_onb_done">完成</string>
     <string name="shz_onb_later">以后也可以在 设置 → 手机权限 里设置，需要时 Muse 也会提醒你。</string>
+    <string name="shz_migration_title">不再需要官方 Shizuku</string>
+    <string name="shz_migration_body">Muse 已内置 shell 服务且工作正常，官方 Shizuku App 可以卸载了。</string>
     <string name="version">当前版本：%1$s</string>
     <string name="engine">智能体引擎</string>
     <string name="engine_ready">运行中</string>
