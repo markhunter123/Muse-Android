@@ -418,7 +418,7 @@ class ScreenTools @Inject constructor(
                 val px = args.int("x"); val py = args.int("y")
                 // Coordinates still work through Shizuku alone, without effects (no accessibility tree to compare).
                 if (DshAccessibilityService.instance == null && px != null && py != null && shizuku.available)
-                    return ToolResult.text(if (tapAt(px.toFloat(), py.toFloat(), long, d)) "Tapped at $px,$py (Shizuku; no accessibility service, so the effect is unknown)" else "Tap was cancelled")
+                    return ToolResult.text(if (tapAt(px.toFloat(), py.toFloat(), long, d)) "Tapped at $px,$py (shell; no accessibility service, so the effect is unknown)" else "Tap was cancelled")
                 fun target(r: Read) = locate(call, d, args, r) ?: run {
                     val x = px ?: throw InvalidArgsException("Give node, text, or x/y")
                     val y = py ?: throw InvalidArgsException("missing y")
@@ -452,7 +452,7 @@ class ScreenTools @Inject constructor(
         },
         object : ScreenTool("screen_type", Risk.write, true,
             "Type text into an editable field (element id, or the focused field). Replaces the field's content unless append=true. " +
-                "submit=true then presses the keyboard's Enter/Search key. Works in WebView/Flutter fields too (falls back to the Muse keyboard, Shizuku or paste).", {
+                "submit=true then presses the keyboard's Enter/Search key. Works in WebView/Flutter fields too (falls back to the Muse keyboard, shell or paste).", {
                 string("text", "Text to enter", required = true)
                 string("node", "Editable element id from the latest screen read (default: focused field)")
                 bool("append", "Append instead of replacing")
@@ -474,7 +474,7 @@ class ScreenTools @Inject constructor(
                 val before = target?.takeUnless { it.isPassword }?.let { TextInput.shownText(it) }
                 val out = textInput.type(svc(), target, text, append, d)
                     ?: return ToolResult.error("input_failed", if (target == null) "No focused input field; tap the field first, then call screen_type again."
-                        else "The field did not accept text by any method (set text, keyboard, Shizuku, paste). Tap the field and retry, or ask the user to type it.")
+                        else "The field did not accept text by any method (set text, keyboard, shell, paste). Tap the field and retry, or ask the user to type it.")
                 val watch = if (t.agent) agent.watch(call.sessionId) else null
                 // Read back the field that received the text (the focused one when no field was known beforehand).
                 val shown = out.fieldText ?: if (target == null) focusedInput(d, read(call, d))?.takeIf { it.isEditable && !it.isPassword }?.let { TextInput.shownText(it) } else null
@@ -570,10 +570,10 @@ class ScreenTools @Inject constructor(
                 val watch = if (t.agent) agent.watch(call.sessionId) else null
                 val done: String = when (key) {
                     "enter", "search" -> pressEnter(key == "search", d, r) ?: return ToolResult.error("failed",
-                        "Could not press $key: the focused field takes no editor action and Shizuku is not available. Tap the on-screen search/send button instead (screen_read to find it).")
+                        "Could not press $key: the focused field takes no editor action and shell access is not available. Tap the on-screen search/send button instead (screen_read to find it).")
                     "delete" -> when {
                         d == Display.DEFAULT_DISPLAY && svc().deleteBackward() -> "Deleted one character"
-                        shellKey(67, d) -> "Pressed delete (Shizuku)"
+                        shellKey(67, d) -> "Pressed delete (shell)"
                         else -> return ToolResult.error("failed", "No focused text field to delete from.")
                     }
                     else -> {
@@ -584,7 +584,7 @@ class ScreenTools @Inject constructor(
                         }
                         if (d != Display.DEFAULT_DISPLAY) {
                             val code = when (key) { "back" -> 4; "home" -> 3; else -> throw InvalidArgsException("'$key' only works on the user's screen (screen: \"main\")") }
-                            if (!shellKey(code, d)) return ToolResult.error("shizuku_unavailable", "Keys on the agent screen need Shizuku.")
+                            if (!shellKey(code, d)) return ToolResult.error("shizuku_unavailable", "Keys on the agent screen need shell access.")
                             "Pressed $key"
                         } else if (svc().performGlobalAction(global)) "Pressed $key" else return ToolResult.error("failed", "Android refused '$key'.")
                     }
@@ -643,7 +643,7 @@ class ScreenTools @Inject constructor(
             val f = r.snap.nodes.firstOrNull { it.isEditable && it.isFocused }
             if (f != null && f.performAction(AccessibilityNodeInfo.AccessibilityAction.ACTION_IME_ENTER.id)) return if (search) "Search" else "Enter"
         }
-        if (shellKey(66, d)) return "Enter (Shizuku)"
+        if (shellKey(66, d)) return "Enter (shell)"
         return null
     }
 }

@@ -83,7 +83,7 @@ class AppTools @Inject constructor(
             }
         },
         object : Tool("app_launch", ToolGroup.Apps, Risk.write, true,
-            "Open an app by package name (optionally a specific exported activity). With Shizuku it opens on your own background screen, " +
+            "Open an app by package name (optionally a specific exported activity). With shell access it opens on your own background screen, " +
                 "so the user keeps using their phone; the screen_* tools then act there. The result says which screen was used.", {
             string("package", "Package name", required = true)
             string("activity", "Fully-qualified exported activity (optional)")

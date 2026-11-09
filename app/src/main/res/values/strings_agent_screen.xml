@@ -16,7 +16,7 @@
     <string name="takeover_kind_other">其他</string>
     <string name="tool_hand_to_user">交给你处理</string>
     <string name="agent_screen_setting">在后台屏操作 App</string>
-    <string name="agent_screen_setting_desc">有 Shizuku 时，智能体在看不见的后台屏上打开和操作 App，不占用你的屏幕</string>
+    <string name="agent_screen_setting_desc">有 shell 权限时，智能体在看不见的后台屏上打开和操作 App，不占用你的屏幕</string>
     <string name="agent_preview_working">智能体正在后台屏操作</string>
     <string name="agent_preview_open">点开查看</string>
     <string name="agent_preview_take_over">我来接管</string>

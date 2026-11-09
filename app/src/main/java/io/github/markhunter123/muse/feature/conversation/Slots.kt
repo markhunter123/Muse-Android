@@ -124,14 +124,14 @@ fun PermissionCard(p: PendingPermission, onAnswer: (Boolean) -> Unit) {
 }
 
 /**
- * Just-in-time Shizuku card: the guide for the current state (install / open / authorize). The
- * waiting call resumes on its own once Shizuku is ready (ShellGate watches the state); 不用了 lets
- * the tool take its non-shell path or tell the model, and is remembered for the session.
+ * Just-in-time shell card: the guide for the current state (pair / start / authorize). The waiting
+ * call resumes on its own once shell access is ready (ShellGate watches the state); 不用了 lets the
+ * tool take its non-shell path or tell the model, and is remembered for the session.
  */
 @Composable
 private fun ShizukuCard(p: PendingPermission, onAnswer: (Boolean) -> Unit) {
     val (access, s) = rememberShellState()
-    val flow = rememberShellGuideFlow(access, s)
+    val flow = rememberShellGuideFlow(access)
     var answered by remember(p.requestKey) { mutableStateOf(false) }
     AttentionCard(stringResource(R.string.shz_strip), answered || s.ready, body = {
         ShellGuideBody(s, stringResource(ToolPresentation.info(p.toolName).title), flow)

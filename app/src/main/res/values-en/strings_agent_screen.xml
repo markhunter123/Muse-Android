@@ -16,7 +16,7 @@
     <string name="takeover_kind_other">Other</string>
     <string name="tool_hand_to_user">Hand to you</string>
     <string name="agent_screen_setting">Operate apps on the agent screen</string>
-    <string name="agent_screen_setting_desc">With Shizuku, the agent opens and operates apps on an invisible screen of its own and leaves yours alone</string>
+    <string name="agent_screen_setting_desc">With shell access, the agent opens and operates apps on an invisible screen of its own and leaves yours alone</string>
     <string name="agent_preview_working">The agent is working on its own screen</string>
     <string name="agent_preview_open">Tap to view</string>
     <string name="agent_preview_take_over">Take over</string>

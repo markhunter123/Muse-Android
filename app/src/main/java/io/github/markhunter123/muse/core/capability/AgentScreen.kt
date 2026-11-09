@@ -339,7 +339,7 @@ class AgentScreen @Inject constructor(
         fun createFailure(serviceReason: String?, callError: Throwable?): String = when {
             !serviceReason.isNullOrBlank() -> serviceReason
             callError != null -> io.github.markhunter123.muse.core.platform.ShellIdentity.describe(callError)
-            else -> "the Shizuku service returned no display and no reason"
+            else -> "the shell service returned no display and no reason"
         }
 
         /** Model-facing note when the call falls back to the user's screen. */

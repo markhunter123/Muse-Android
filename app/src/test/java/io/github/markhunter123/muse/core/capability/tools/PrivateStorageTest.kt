@@ -34,8 +34,8 @@ class PrivateStorageTest {
     }
 
     @Test fun shizukuMessageNamesTheSetting() {
-        val m = PrivateStorage.needsShizuku("Shizuku is installed but not running")
-        assertTrue(m, m.contains("访问 Android/data 需要 Shizuku") && m.contains("Shizuku is installed but not running") && m.contains("Settings"))
+        val m = PrivateStorage.needsShizuku("shell server not running")
+        assertTrue(m, m.contains("访问 Android/data 需要 shell 权限") && m.contains("shell server not running") && m.contains("Settings"))
     }
 
     @Test fun adbShellResultFormat() {

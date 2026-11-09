@@ -58,7 +58,7 @@ class ShizukuShell @Inject constructor(@ApplicationContext private val context: 
         withTimeoutOrNull(30_000) { deferred.await() }?.also { service = it }
             ?: run {
                 withContext(Dispatchers.Main) { runCatching { Shizuku.unbindUserService(args, conn, true) } }
-                error("the Shizuku shell service did not start within 30 s; try again")
+                error("the shell service did not start within 30 s; try again")
             }
     }
 

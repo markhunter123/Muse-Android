@@ -51,9 +51,9 @@ sealed interface ShellState {
         NotPaired -> "pair once in Settings → Phone permissions → shell access (root needs no pairing)"
         is PairedNotRunning -> if (reason.isEmpty()) "shell server not running — start it from the shell access page (wireless debugging or root)"
             else "shell server not running: $reason — retry from the shell access page"
-        is RunningNoPermission -> if (denied) "denied before: enable Muse under Authorized apps in Shizuku" else "tap Authorize in Muse (the server shows its prompt)"
+        is RunningNoPermission -> if (denied) "denied before: tap Authorize in Muse again; if it no longer prompts, restart the shell server and retry" else "tap Authorize in Muse (the server shows its prompt)"
         Ready -> "nothing to do"
-        is Unsupported -> "update Muse (the embedded server ships with it) or, during coexistence, the official Shizuku app"
+        is Unsupported -> "the running server is too old; restart it from the shell access page (the embedded one ships with Muse)"
     }
 
     companion object {

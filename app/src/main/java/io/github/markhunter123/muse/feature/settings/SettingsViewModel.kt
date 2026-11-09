@@ -61,7 +61,6 @@ class SettingsViewModel @Inject constructor(
     /** Engine restarts go through the store, so the runs they kill end as stopped (not spinning forever). */
     private val sessions: io.github.markhunter123.muse.core.session.SessionStore,
     val shizuku: ShizukuShell,
-    private val shizukuInstaller: io.github.markhunter123.muse.core.platform.ShizukuInstaller,
     val account: io.github.markhunter123.muse.core.account.AccountRepository,
     usage: UsageDao,
     private val sessionDao: io.github.markhunter123.muse.core.data.SessionDao,
@@ -288,8 +287,8 @@ class SettingsViewModel @Inject constructor(
             checks += DoctorCheck(it.title(zh), it.check(context), it.why(zh), it.intent(context))
         }
         val shell = shizuku.access.refresh()
-        checks += DoctorCheck("Shizuku", if (shell == io.github.markhunter123.muse.core.platform.ShellState.NotPaired) null else shell.ready,
-            listOfNotNull(shellStateLabel(context, shell), shellStateHint(context, shell)).joinToString(" · "), shellFixIntent(shizuku.access, shell, shizukuInstaller.bundled))
+        checks += DoctorCheck(if (zh) "shell 权限" else "Shell access", if (shell == io.github.markhunter123.muse.core.platform.ShellState.NotPaired) null else shell.ready,
+            listOfNotNull(shellStateLabel(context, shell), shellStateHint(context, shell)).joinToString(" · "), shellFixIntent(shizuku.access, shell))
         agentScreen.lastCreateError?.let { checks += DoctorCheck(context.getString(R.string.agent_screen_doctor), false, context.getString(R.string.agent_screen_create_failed, it)) }
         val signedIn = account.signedIn
         val third = settings.value.choice.provider

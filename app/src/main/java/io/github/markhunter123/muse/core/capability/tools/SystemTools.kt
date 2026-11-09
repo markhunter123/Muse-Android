@@ -67,7 +67,7 @@ class SystemTools @Inject constructor(
     private suspend fun shell(cmd: String, what: String): ToolResult {
         if (!shizuku.available) throw ShellUnavailableException(gate.access.state.value)
         val r = shizuku.exec(cmd)
-        return if (r.code == 0) ToolResult.text("Done via Shizuku: $what. ${r.output.trim()}".trim()) else ToolResult.error("failed", r.output.ifBlank { "exit ${r.code}" })
+        return if (r.code == 0) ToolResult.text("Done via shell: $what. ${r.output.trim()}".trim()) else ToolResult.error("failed", r.output.ifBlank { "exit ${r.code}" })
     }
 
     /** Shizuku attempt for a [ShellUse.Fallback] tool: null (→ fallback path) when it fails. */
@@ -78,7 +78,7 @@ class SystemTools @Inject constructor(
      * only lets Muse open it while Muse is visible (or may draw overlays); otherwise say so plainly.
      */
     private fun openForUser(intent: Intent, what: String): ToolResult {
-        val reason = gate.access.state.value.let { if (it.ready) "the Shizuku command failed" else it.reason }
+        val reason = gate.access.state.value.let { if (it.ready) "the shell command failed" else it.reason }
         if (!AppVisibility.isForeground && !Settings.canDrawOverlays(context))
             return ToolResult.error("needs_user", "Could not $what directly ($reason) and Android blocks opening system panels while Muse is in the background. Ask the user to do it.")
         return runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.fold(
@@ -277,7 +277,7 @@ class SystemTools @Inject constructor(
             }
         },
         object : Tool("wifi_toggle", ToolGroup.System, Risk.write, false,
-            "Turn Wi-Fi on/off. Directly through Shizuku when available; otherwise opens the system Wi-Fi panel for the user to tap.",
+            "Turn Wi-Fi on/off. Directly through shell access when available; otherwise opens the system Wi-Fi panel for the user to tap.",
             { bool("on", "", required = true) }, ShellUse.Fallback, "open the system Wi-Fi panel and the user taps the switch") {
             override suspend fun invoke(args: JsonObject, call: CallContext): ToolResult {
                 val on = args.bool("on") == true
@@ -288,7 +288,7 @@ class SystemTools @Inject constructor(
             }
         },
         object : Tool("bluetooth_toggle", ToolGroup.System, Risk.write, false,
-            "Turn Bluetooth on/off. Directly through Shizuku when available; otherwise shows the system Bluetooth prompt/page for the user to confirm.",
+            "Turn Bluetooth on/off. Directly through shell access when available; otherwise shows the system Bluetooth prompt/page for the user to confirm.",
             { bool("on", "", required = true) }, ShellUse.Fallback, "show the system Bluetooth prompt or page and the user confirms") {
             override suspend fun invoke(args: JsonObject, call: CallContext): ToolResult {
                 val on = args.bool("on") == true
@@ -302,7 +302,7 @@ class SystemTools @Inject constructor(
             }
         },
         object : Tool("mobile_data_toggle", ToolGroup.System, Risk.write, false,
-            "Turn mobile data on/off. Directly through Shizuku when available; otherwise opens the system Internet panel for the user to tap.",
+            "Turn mobile data on/off. Directly through shell access when available; otherwise opens the system Internet panel for the user to tap.",
             { bool("on", "", required = true) }, ShellUse.Fallback, "open the system Internet panel and the user taps the switch") {
             override suspend fun invoke(args: JsonObject, call: CallContext): ToolResult {
                 val on = args.bool("on") == true
@@ -311,23 +311,23 @@ class SystemTools @Inject constructor(
             }
         },
         object : Tool("setting_get", ToolGroup.System, Risk.read, false,
-            "Read Android settings: one key, or (key omitted, needs Shizuku) every key in a namespace matching filter. Common keys: " +
+            "Read Android settings: one key, or (key omitted, needs shell access) every key in a namespace matching filter. Common keys: " +
                 "global airplane_mode_on, mobile_data, wifi_on, bluetooth_on, auto_time; system screen_off_timeout (ms), screen_brightness (0-255), " +
                 "screen_brightness_mode, accelerometer_rotation (auto-rotate), font_scale; secure location_mode, default_input_method, ui_night_mode.",
             {
                 string("namespace", "", required = true, enum = listOf("system", "secure", "global"))
                 string("key", "Setting key (omit to list)"); string("filter", "When listing: only keys containing this")
-            }, ShellUse.Fallback, "read public keys directly (listing and hidden keys need Shizuku)") {
+            }, ShellUse.Fallback, "read public keys directly (listing and hidden keys need shell access)") {
             override suspend fun invoke(args: JsonObject, call: CallContext): ToolResult {
                 val ns = args.reqStr("namespace")
                 val key = args.str("key")?.filter { it.isLetterOrDigit() || it in "_." }
                 if (key == null) {
                     val r = runCatching { shell("settings list $ns", "list settings") }.getOrNull()
-                        ?: return ToolResult.error("shizuku_unavailable", "Listing settings needs Shizuku (${gate.access.state.value.reason}); read a specific key instead.")
+                        ?: return ToolResult.error("shizuku_unavailable", "Listing settings needs shell access (${gate.access.state.value.reason}); read a specific key instead.")
                     if (!r.ok) return r
                     val f = args.str("filter")?.lowercase()
                     val lines = (r.content.firstOrNull() as? io.github.markhunter123.muse.core.capability.Content.Text)?.text.orEmpty()
-                        .removePrefix("Done via Shizuku: list settings.").lines().map { it.trim() }.filter { it.isNotEmpty() && (f == null || it.lowercase().contains(f)) }
+                        .removePrefix("Done via shell: list settings.").lines().map { it.trim() }.filter { it.isNotEmpty() && (f == null || it.lowercase().contains(f)) }
                     return ToolResult.text(lines.take(300).joinToString("\n").ifEmpty { "No matching keys." } + if (lines.size > 300) "\n…(${lines.size - 300} more; use filter)" else "")
                 }
                 val cr = context.contentResolver
@@ -337,9 +337,9 @@ class SystemTools @Inject constructor(
                 direct.getOrNull()?.let { return ToolResult.text("$ns $key = $it") }
                 if (shizuku.available) {
                     val r = shizuku.exec("settings get $ns $key")
-                    if (r.code == 0) return ToolResult.text("$ns $key = ${r.output.trim()} (via Shizuku)")
+                    if (r.code == 0) return ToolResult.text("$ns $key = ${r.output.trim()} (via shell)")
                 }
-                return if (direct.isFailure) ToolResult.error("not_authorized", "Android does not let apps read $ns/$key (${direct.exceptionOrNull()?.javaClass?.simpleName}); it needs Shizuku.")
+                return if (direct.isFailure) ToolResult.error("not_authorized", "Android does not let apps read $ns/$key (${direct.exceptionOrNull()?.javaClass?.simpleName}); it needs shell access.")
                 else ToolResult.text("$ns $key is not set (null).")
             }
         },
@@ -368,7 +368,7 @@ class SystemTools @Inject constructor(
             }
         },
         object : Tool("setting_put", ToolGroup.System, Risk.dangerous, false,
-            "Write an Android setting via `settings put <namespace> <key> <value>` (needs Shizuku). For things no dedicated tool covers.", {
+            "Write an Android setting via `settings put <namespace> <key> <value>` (needs shell access). For things no dedicated tool covers.", {
                 string("namespace", "", required = true, enum = listOf("system", "secure", "global"))
                 string("key", "", required = true); string("value", "", required = true)
             }, ShellUse.Required) {
@@ -404,7 +404,7 @@ internal object AdbShell {
     const val OUTPUT_CAP = 64_000
     const val TIMED_OUT = 124
 
-    const val DESCRIPTION = "Run a command as the Android shell user through Shizuku: the same as `adb shell <command>` from a computer, on this phone. " +
+    const val DESCRIPTION = "Run a command as the Android shell user through shell access: the same as `adb shell <command>` from a computer, on this phone. " +
         "Only for what the bash tool cannot do as an app: pm (list, enable/disable, grant), am (start, force-stop), cmd, dumpsys, settings, wm, input, " +
         "appops, logcat -d, and files under Android/data or Android/obb. Prefer a dedicated tool when one fits (file_*, setting_put, wifi_toggle, app_*). " +
         "Runs /system/bin/sh from \"/\" without root and without a terminal: no prompts, and a command that never ends (logcat without -d, top without -n) " +

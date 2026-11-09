@@ -42,7 +42,7 @@ class ShellGate @Inject constructor(val shell: ShizukuShell, private val session
         if (s.ready) return true
         if (call.unattended || call.sessionId.isEmpty() || access.isDeclined(call.sessionId)) return false
         if (optional && (s == ShellState.NotPaired || s is ShellState.Unsupported)) return false
-        val answered = call.waitFor("set up Shizuku") { coroutineScope {
+        val answered = call.waitFor("set up shell access") { coroutineScope {
             val ready = async { access.state.first { it.ready }; true }
             val asked = async { sessions.get().requestPermission(call.sessionId, toolName, SHIZUKU_WHAT) }
             select { ready.onAwait { it }; asked.onAwait { it } }.also { ready.cancel(); asked.cancel() }
@@ -56,8 +56,8 @@ class ShellGate @Inject constructor(val shell: ShizukuShell, private val session
     fun unavailable(call: CallContext): ToolResult {
         val reason = access.state.value.reason
         return ToolResult.error("shizuku_unavailable", when {
-            call.unattended -> "This step needs Shizuku (shell access), but $reason. Automations cannot ask the user to set it up; skip this step or report it."
-            else -> "This needs Shizuku (shell access), but $reason and the user chose not to set it up now. Do not call Shizuku-only tools again " +
+            call.unattended -> "This step needs shell access, but $reason. Automations cannot ask the user to set it up; skip this step or report it."
+            else -> "This needs shell access, but $reason and the user chose not to set it up now. Do not call shell-only tools again " +
                 "in this session; do it another way (system intents, settings panels, screen tools) or tell the user it can be enabled in Muse → Settings → Phone."
         })
     }
@@ -66,8 +66,8 @@ class ShellGate @Inject constructor(val shell: ShizukuShell, private val session
         /** Appended to model-facing descriptions. Never includes live state (see CapabilityHub.listed). */
         fun staticNote(use: ShellUse, fallback: String?): String = when (use) {
             ShellUse.None -> ""
-            ShellUse.Fallback -> " [Uses Shizuku (shell access) when it is ready; otherwise it will ${fallback ?: "use a non-shell fallback"}. The result says which path ran.]"
-            ShellUse.Required -> " [Needs Shizuku (shell access). If it is not ready, the call shows the user a Shizuku setup card; if it returns shizuku_unavailable, don't call Shizuku-only tools again this session.]"
+            ShellUse.Fallback -> " [Uses shell access when it is ready; otherwise it will ${fallback ?: "use a non-shell fallback"}. The result says which path ran.]"
+            ShellUse.Required -> " [Needs shell access. If it is not ready, the call shows the user a shell setup card; if it returns shizuku_unavailable, don't call shell-only tools again this session.]"
         }
     }
 }

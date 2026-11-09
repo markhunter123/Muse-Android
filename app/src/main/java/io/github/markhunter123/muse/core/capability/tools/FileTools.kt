@@ -81,7 +81,7 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
 
     /** Runs a tool body on the IO dispatcher; a private path without Shizuku becomes a clear error. */
     private suspend fun io(block: suspend CoroutineScope.() -> ToolResult): ToolResult = withContext(Dispatchers.IO) {
-        try { block() } catch (e: NeedsShizuku) { ToolResult.error("shizuku_required", e.message ?: "Shizuku is needed") }
+        try { block() } catch (e: NeedsShizuku) { ToolResult.error("shizuku_required", e.message ?: "shell access is needed") }
     }
 
     private suspend fun shell(): IShellService = shizuku.service()
@@ -119,13 +119,13 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
         const val MAX_CHARS = 100_000
         /** Images and documents read through Shizuku are copied to the cache first; larger ones are refused. */
         const val MAX_SHELL_COPY = 64L shl 20
-        const val PRIVATE_NOTE = " Android/data and Android/obb work too (through Shizuku on Android 11+)."
+        const val PRIVATE_NOTE = " Android/data and Android/obb work too (through shell access on Android 11+)."
     }
 
     override val tools = listOf(
         object : Tool("file_search", ToolGroup.Files, Risk.read, false,
             "Find files on shared storage by name pattern and/or text content. Fast (ripgrep). Use before reading or modifying files. " +
-                "Android/data and Android/obb are only searched when 'dir' points inside them (through Shizuku on Android 11+).", {
+                "Android/data and Android/obb are only searched when 'dir' points inside them (through shell access on Android 11+).", {
                 string("name", "Glob on file name, e.g. '*.pdf' or '*invoice*'")
                 string("content", "Text the file must contain (literal, case-insensitive; text files only)")
                 bool("regex", "Treat content as a regular expression")
@@ -140,7 +140,7 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
                     val r = rows(shell().fsSearch(dir.path, args.str("name"), args.str("content")?.takeIf { it.isNotEmpty() }, args.bool("regex") == true, limit, args.str("sort")))
                     val total = r.total ?: r.rows.size
                     return@io ToolResult.text((if (r.rows.isEmpty()) "No files found." else
-                        "$total match(es)${if (total > r.rows.size) ", showing ${r.rows.size}" else ""} (via Shizuku):\n" + r.rows.joinToString("\n") { it.describe() }) +
+                        "$total match(es)${if (total > r.rows.size) ", showing ${r.rows.size}" else ""} (via shell):\n" + r.rows.joinToString("\n") { it.describe() }) +
                         (r.note?.let { "\n(note: $it)" } ?: ""))
                 }
                 val rg = File(context.filesDir, "bin/rg").path
@@ -236,9 +236,9 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
                 // Images and documents need a real file: a bounded copy in the cache, removed afterwards.
                 var tmp: File? = null
                 try {
-                    read(Src(f.extension, row.size, row.describe() + " (via Shizuku)", open) {
+                    read(Src(f.extension, row.size, row.describe() + " (via shell)", open) {
                         if (row.size > MAX_SHELL_COPY) throw InvalidArgsException("${f.path} is ${human(row.size)}; files over ${human(MAX_SHELL_COPY)} of this type " +
-                            "cannot be opened through Shizuku. Copy it to another folder with file_move (copy=true) and read the copy.")
+                            "cannot be opened through shell access. Copy it to another folder with file_move (copy=true) and read the copy.")
                         File(File(context.cacheDir, "shell-read").apply { mkdirs() }, "${System.nanoTime()}.${f.extension}").also { t ->
                             tmp = t
                             open().use { i -> t.outputStream().use { i.copyTo(it) } }
@@ -347,7 +347,7 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
                     val bytes = (args.str("content") ?: "").toByteArray(Charsets.UTF_8)
                     ParcelFileDescriptor.AutoCloseOutputStream(svc.fsOpen(f.path, if (args.bool("append") == true) "wa" else "w")).use { it.write(bytes) }
                     val size = svc.fsStat(f.path)?.let { ShellFiles.parseRow(it) }?.size ?: bytes.size.toLong()
-                    return@io ToolResult.text("Wrote ${f.path} (${human(size)}, via Shizuku)")
+                    return@io ToolResult.text("Wrote ${f.path} (${human(size)}, via shell)")
                 }
                 f.parentFile?.mkdirs()
                 if (args.bool("append") == true) f.appendText(args.str("content") ?: "") else f.writeText(args.str("content") ?: "")
@@ -390,7 +390,7 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
                         // Either end in Android/data|obb: the shell user does the whole item (it reaches both).
                         val fromShell = viaShell(from)
                         if (fromShell || viaShell(to))
-                            return@runCatching shell().fsMove(from.path, to.path + if (rawTo.endsWith("/")) "/" else "", copy) + " (via Shizuku)"
+                            return@runCatching shell().fsMove(from.path, to.path + if (rawTo.endsWith("/")) "/" else "", copy) + " (via shell)"
                         if (!from.exists()) return@runCatching "failed ${from.path}: not found"
                         // A trailing slash means "into this folder", even if it does not exist yet.
                         if (rawTo.endsWith("/") || to.isDirectory) { to.mkdirs(); to = File(to, from.name) }
@@ -423,7 +423,7 @@ class FileTools @Inject constructor(@ApplicationContext private val context: Con
                     val f = resolve(p)
                     val path = f.canonicalPath
                     if (PrivateStorage.isScopeRoot(path)) return@map "refused: ${f.path} (all of Android/data or Android/obb)"
-                    if (viaShell(f)) return@map shell().fsDelete(f.path) + " (via Shizuku)"
+                    if (viaShell(f)) return@map shell().fsDelete(f.path) + " (via shell)"
                     when {
                         // The storage root, anything above it (/storage, /storage/emulated) and volume roots (SD cards).
                         path == rootPath || rootPath.startsWith("$path/") || f.parentFile?.canonicalPath == "/storage" || path == "/storage" ->

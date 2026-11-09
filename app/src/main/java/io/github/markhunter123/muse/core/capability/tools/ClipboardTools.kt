@@ -25,7 +25,7 @@ class ClipboardTools @Inject constructor(@ApplicationContext private val context
 
     override val tools = listOf(
         object : Tool("clipboard_get", ToolGroup.Clipboard, Risk.sensitive, false,
-            "Read the clipboard text. Android only allows this while Muse is in the foreground (or via Shizuku).", {},
+            "Read the clipboard text. Android only allows this while Muse is in the foreground (or via shell access).", {},
             ShellUse.Fallback, "only work while Muse is in the foreground") {
             override suspend fun invoke(args: JsonObject, call: CallContext): ToolResult {
                 val (readable, text) = withContext(Dispatchers.Main) {
@@ -40,7 +40,7 @@ class ClipboardTools @Inject constructor(@ApplicationContext private val context
                     val r = shizuku.exec("cmd clipboard get-primary-clip 2>/dev/null")
                     val out = r.output.trim()
                     if (r.code == 0 && out.isNotEmpty() && !out.startsWith("Result: Parcel") && !out.contains("Unknown command"))
-                        return ToolResult.text("(read via Shizuku) " + out.removePrefix("ClipData { text/plain ").removeSuffix("}"))
+                        return ToolResult.text("(read via shell) " + out.removePrefix("ClipData { text/plain ").removeSuffix("}"))
                 }
                 return ToolResult.error("failed", "Clipboard is not readable right now: Android only lets the app in front read it, and ${shizuku.access.state.value.reason}. Open Muse and retry, or ask the user to paste it.")
             }

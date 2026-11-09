@@ -42,7 +42,7 @@ class ActivityLauncher @Inject constructor(
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         if (displayId == null && (mayStartFromBackground() || !shizuku.available)) {
             if (!mayStartFromBackground()) throw LaunchBlocked("Android does not let Muse open other apps while it is in the background " +
-                "(no overlay permission, accessibility service or Shizuku). Ask the user to open it, or to enable Muse's accessibility service.")
+                "(no overlay permission, accessibility service or shell access). Ask the user to open it, or to enable Muse's accessibility service.")
             try { context.startActivity(intent) }
             catch (e: ActivityNotFoundException) { throw InvalidArgsException("No app can handle this: ${e.message}") }
             catch (e: SecurityException) { if (!shizuku.available) throw e; return viaShell(intent, null, expect) }
@@ -68,7 +68,7 @@ class ActivityLauncher @Inject constructor(
         val out = r.output
         if (r.code != 0 || out.contains("Error") || (out.contains("Status:") && !out.contains("Status: ok")))
             throw IllegalStateException(out.lines().firstOrNull { it.contains("Error") || it.contains("Status") }?.trim() ?: out.take(300))
-        return "ok (via Shizuku)" + if (displayId == null) confirm(expect) else confirmOn(displayId, expect)
+        return "ok (via shell)" + if (displayId == null) confirm(expect) else confirmOn(displayId, expect)
     }
 
     private fun shellQuote(s: String) = "'" + s.replace("'", "'\\''") + "'"
