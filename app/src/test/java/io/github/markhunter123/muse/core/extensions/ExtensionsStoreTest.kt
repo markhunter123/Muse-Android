@@ -68,6 +68,7 @@ class ExtensionsStoreTest {
         val s = store()
         s.refresh()
         val event = async { s.events.first() }
+        yield()
         val view = s.change("a") { setEnabled("a", true) }
         assertTrue(view.restartRequired)
         val activated = (event.await() as ExtEvent.Activated).results.single()
