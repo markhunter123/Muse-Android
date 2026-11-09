@@ -1,7 +1,9 @@
 package io.github.markhunter123.muse.feature.settings
 
 import android.content.Context
+import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -12,9 +14,11 @@ import io.github.markhunter123.muse.core.engine.EngineManager
 import io.github.markhunter123.muse.core.engine.RpcJson
 import io.github.markhunter123.muse.core.model.RuleSpec
 import io.github.markhunter123.muse.core.model.Trigger
+import io.github.markhunter123.muse.core.platform.ShellAccess
 import io.github.markhunter123.muse.core.trigger.RuleMonitorService
 import io.github.markhunter123.muse.core.trigger.TriggerHub
 import io.github.markhunter123.muse.service.DshInputMethodService
+import moe.shizuku.server.muse.KeyStorage
 
 /**
  * Doctor rows for background reliability and crash evidence (review §6/§8/§12): the battery
@@ -28,6 +32,8 @@ object ReliabilityDoctor {
         fun rules(): RuleDao
         fun triggers(): TriggerHub
         fun engine(): EngineManager
+        fun shellKeyStorage(): KeyStorage
+        fun shellAccess(): ShellAccess
     }
 
     suspend fun checks(context: Context, zh: Boolean): List<DoctorCheck> {
@@ -58,6 +64,16 @@ object ReliabilityDoctor {
                     if (gms) (if (zh) "使用 Google Play 服务地理围栏" else "Google Play services geofencing")
                     else if (zh) "无 Play 服务：使用系统位置提醒，后台可能延迟数分钟触发" else "No Play services: platform proximity alerts, may fire minutes late in the background")
             }
+        }
+        // shell 自启依赖无线调试保持开启（Android 11+ 且已配对才有这条路径）
+        if (Build.VERSION.SDK_INT >= 30 && runCatching { deps.shellKeyStorage().load() != null }.getOrDefault(false)) {
+            val wadb = runCatching { Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", 0) == 1 }.getOrDefault(false)
+            out += DoctorCheck(if (zh) "shell：无线调试保持开启" else "Shell: keep wireless debugging on", wadb,
+                when {
+                    wadb -> if (zh) "重启后 shell 服务可免交互自动启动" else "The shell server starts itself after a reboot"
+                    zh -> "关掉它，重启后 shell 服务起不来；开发者选项 → 无线调试"
+                    else -> "The shell server cannot start itself after a reboot; keep wireless debugging on in Developer options"
+                }, deps.shellAccess().developerOptionsIntent())
         }
         val restarts = deps.engine().restarts
         if (restarts.open || restarts.recentFailures > 0) out += DoctorCheck(if (zh) "引擎崩溃保护" else "Engine crash protection", !restarts.open,

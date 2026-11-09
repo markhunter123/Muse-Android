@@ -284,6 +284,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- 嵌入式 shell server 开机自启：已配对才动作（无线调试自动连接）；失败静默，回前台重试。 -->
+        <receiver android:name=".core.platform.ShellBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

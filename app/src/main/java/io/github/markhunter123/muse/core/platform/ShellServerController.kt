@@ -2,14 +2,21 @@ package io.github.markhunter123.muse.core.platform
 
 import android.content.Context
 import android.os.Build
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.markhunter123.muse.core.data.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import moe.shizuku.manager.adb.AdbKey
 import moe.shizuku.server.muse.KeyStorage
 import moe.shizuku.server.muse.MuseAdbKeys
 import rikka.shizuku.Shizuku
@@ -52,6 +59,22 @@ class ShellServerController @Inject constructor(
     private val _connection = MutableStateFlow(ConnectionStatus.IDLE)
     val connection: StateFlow<ConnectionStatus> = _connection.asStateFlow()
 
+    private val prefs = context.getSharedPreferences("shell_boot", Context.MODE_PRIVATE)
+
+    init {
+        // 开机自启失败后的前台重试：回前台时若上次开机没起来，再试一次。
+        // ProcessLifecycleOwner 在单测环境可能未初始化——跳过钩子即可。
+        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+            runCatching {
+                ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+                    override fun onStart(owner: LifecycleOwner) {
+                        CoroutineScope(Dispatchers.IO).launch { if (prefs.getBoolean(KEY_BOOT_RETRY, false)) tryAutoStart() }
+                    }
+                })
+            }
+        }
+    }
+
     /** 确保 server 在跑：binder → 无线调试自动连接 → root 兜底（shellRoot 门禁）。自动路径用。 */
     suspend fun ensureRunning(): ShellState = withContext(Dispatchers.IO) {
         val current = shell.refresh()
@@ -83,6 +106,28 @@ class ShellServerController @Inject constructor(
         if (shell.refresh().ready) return@withContext shell.state.value
         startRoot()
     }
+
+    /**
+     * 开机自启试一次（[ShellBootReceiver] 调用）：已配对才走无线路径，失败静默记 pref，下次回前台重试。
+     * 预算比 ensureRunning 小（receiver goAsync 内 ~20s 上限）；connection 状态不打扰 UI。
+     * key/pollBinder/starterCmd 是测试注入口，真机走默认的密钥文件解析、Shizuku.pingBinder 与 applicationInfo 拼接。
+     */
+    suspend fun tryAutoStart(
+        pollBinder: suspend () -> Boolean = ::pollBinder,
+        key: AdbKey? = resolveKey(),
+        starterCmd: String = ShellServerCommands.starterCommand(context.applicationInfo.sourceDir, context.applicationInfo.nativeLibraryDir),
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (shell.refresh().ready) return@withContext true
+        if (key == null) return@withContext false
+        val started = launcher.launch(
+            key, starterCmd, pollBinder,
+            pollCount = BOOT_POLL_COUNT, discoverTimeoutMs = BOOT_DISCOVER_TIMEOUT_MS,
+        ) is AdbLaunchOutcome.Started
+        prefs.edit().putBoolean(KEY_BOOT_RETRY, !started).apply()
+        started
+    }
+
+    private fun resolveKey(): AdbKey? = if (Build.VERSION.SDK_INT >= 30) MuseAdbKeys.loadKey(keyStorage) else null
 
     private suspend fun pollBinder(): Boolean =
         runCatching { Shizuku.pingBinder() }.getOrDefault(false)
@@ -127,5 +172,9 @@ class ShellServerController @Inject constructor(
 
     private companion object {
         const val START_TIMEOUT_MS = 30_000L
+        /** 开机自启预算（receiver goAsync 内）：mDNS 发现 10s + binder 轮询 5×1s，总预算 ~20s 内。 */
+        const val BOOT_DISCOVER_TIMEOUT_MS = 10_000L
+        const val BOOT_POLL_COUNT = 5
+        const val KEY_BOOT_RETRY = "retry_pending"
     }
 }
