@@ -15,6 +15,7 @@ import moe.shizuku.api.BinderContainer;
 import moe.shizuku.starter.util.IContentProviderCompat;
 import rikka.hidden.compat.ActivityManagerApis;
 import rikka.shizuku.ShizukuApiConstants;
+import rikka.shizuku.server.ServerConstants;
 import rikka.shizuku.server.UserService;
 
 public class ServiceStarter {
@@ -92,8 +93,10 @@ public class ServiceStarter {
     }
 
     private static boolean sendBinder(IBinder binder, String token, boolean retry) {
-        // MUSE: user service binder goes back to Muse's provider (we are the manager)
-        String packageName = "io.github.markhunter123.muse";
+        // MUSE: user service binder goes back to Muse's provider (we are the manager)。
+        // 包名跟随 starter 的 --package（ServerConstants 读 MUSE_MANAGER_PACKAGE 环境变量，
+        // 没设就退回正式包名）——debug 构建的 provider authority 是 ${applicationId}.shizuku。
+        String packageName = ServerConstants.MANAGER_APPLICATION_ID;
         String name = packageName + ".shizuku";
         int userId = 0;
         IContentProvider provider = null;

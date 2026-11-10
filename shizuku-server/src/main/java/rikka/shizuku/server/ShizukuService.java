@@ -217,6 +217,18 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
             }
         }
 
+        // MUSE: manager 即 Muse 本身，直接放行（spec：Muse 自身永远有 shell 权限）。
+        // 上游靠官方 manager 的签名权限种子授权，内嵌版没有那条路——不置 allowed 的话
+        // 全新安装会卡在"服务运行中但未授权"（checkSelfPermission 只读 ClientRecord.allowed）。
+        if (isManager) {
+            ClientRecord managerRecord = clientRecord != null ? clientRecord : clientManager.findClient(callingUid, callingPid);
+            if (managerRecord != null) {
+                managerRecord.allowed = true;
+            } else {
+                LOGGER.w("attachApplication: manager client record not found for uid " + callingUid);
+            }
+        }
+
         LOGGER.d("attachApplication: %s %d %d", requestPackageName, callingUid, callingPid);
 
         int replyServerVersion = ShizukuApiConstants.SERVER_VERSION;
@@ -508,6 +520,11 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
     }
 
     static void sendBinderToUserApp(Binder binder, String packageName, int userId, boolean retry) {
+        // MUSE: binder 只推给 manager（Muse 本身），不给任何第三方应用（spec 决策）。
+        if (!MANAGER_APPLICATION_ID.equals(packageName)) {
+            LOGGER.w("Refused to send binder to non-manager package " + packageName);
+            return;
+        }
         try {
             DeviceIdleControllerApis.addPowerSaveTempWhitelistApp(packageName, 30 * 1000, userId,
                     316/* PowerExemptionManager#REASON_SHELL */, "shell");

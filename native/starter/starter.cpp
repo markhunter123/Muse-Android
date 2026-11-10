@@ -185,10 +185,20 @@ static int switch_cgroup() {
 
 int main(int argc, char *argv[]) {
     std::string apk_path;
+    std::string manager_package;
     for (int i = 0; i < argc; ++i) {
         if (strncmp(argv[i], "--apk=", 6) == 0) {
             apk_path = argv[i] + 6;
+        } else if (strncmp(argv[i], "--package=", 10) == 0) {
+            manager_package = argv[i] + 10;
         }
+    }
+
+    // MUSE: forward the app's package id (debug builds carry a .dev suffix) so the server
+    // identifies its manager without a rebuild; ServerConstants reads MUSE_MANAGER_PACKAGE
+    // and falls back to PACKAGE_NAME when unset. fork 后子进程继承环境，setenv 要在前面做。
+    if (!manager_package.empty()) {
+        setenv("MUSE_MANAGER_PACKAGE", manager_package.c_str(), true);
     }
 
     uid_t uid = getuid();
