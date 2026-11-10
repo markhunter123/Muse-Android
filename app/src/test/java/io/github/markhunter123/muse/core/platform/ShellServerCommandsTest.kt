@@ -7,13 +7,14 @@ import org.junit.Test
 class ShellServerCommandsTest {
 
     @Test
-    fun `starter command points app_process at the muse apk`() {
+    fun `starter command points app_process at the muse apk and forwards the application id`() {
         val cmd = ShellServerCommands.starterCommand(
             apkPath = "/data/app/~~x/base.apk",
             nativeLibDir = "/data/app/~~x/lib/arm64",
+            packageName = "io.github.markhunter123.muse.dev",
         )
         assertEquals(
-            "/data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk", cmd,
+            "/data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk --package=io.github.markhunter123.muse.dev", cmd,
         )
     }
 
@@ -22,8 +23,9 @@ class ShellServerCommandsTest {
         val cmd = ShellServerCommands.rootCommand(
             starter = "/data/app/~~x/lib/arm64/libmuse_starter.so",
             apkPath = "/data/app/~~x/base.apk",
+            packageName = "io.github.markhunter123.muse.dev",
         )
-        assertEquals("su -c '/data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk'", cmd)
+        assertEquals("su -c '/data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk --package=io.github.markhunter123.muse.dev'", cmd)
     }
 
     @Test
@@ -31,7 +33,8 @@ class ShellServerCommandsTest {
         val cmd = ShellServerCommands.manualCommand(
             starter = "/data/app/~~x/lib/arm64/libmuse_starter.so",
             apkPath = "/data/app/~~x/base.apk",
+            packageName = "io.github.markhunter123.muse.dev",
         )
-        assertEquals("adb shell /data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk", cmd)
+        assertEquals("adb shell /data/app/~~x/lib/arm64/libmuse_starter.so --apk=/data/app/~~x/base.apk --package=io.github.markhunter123.muse.dev", cmd)
     }
 }

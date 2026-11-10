@@ -19,8 +19,8 @@ import java.security.Key
 /** 一次无线连接尝试的结果；[log] 是 adbd 输出/异常摘要，进诊断。 */
 data class AdbResult(val success: Boolean, val log: String?)
 
-/** 配对失败三类，文案在设置页分开（Task 12）。 */
-enum class PairFailure { WRONG_CODE, TIMEOUT, DISCOVERY }
+/** 配对失败四类，文案在设置页分开（Task 12；KEYSTORE 是 Final review 补的密钥库失败）。 */
+enum class PairFailure { WRONG_CODE, TIMEOUT, DISCOVERY, KEYSTORE }
 
 data class PairResult(val success: Boolean, val reason: PairFailure?)
 

@@ -516,6 +516,7 @@
     <string name="shizuku_unsupported">版本过旧</string>
     <string name="shizuku_unsupported_v">版本过旧（服务 API %1$d，需要 %2$d 以上）</string>
     <string name="shz_hint_missing">到 设置 → 手机权限 → shell 权限 配对一次（可选）</string>
+    <string name="shz_hint_missing_root">到 设置 → 手机权限 → shell 服务 启动一次（可选）</string>
     <string name="shz_hint_start">点「启动」，用无线调试自动连接（需要无线调试开着）</string>
     <string name="shz_hint_permission">点「授权」，在弹窗里允许 Muse</string>
     <string name="shz_hint_denied">之前拒绝过：点「授权」再试一次，弹不出来了就重启服务再试</string>
@@ -531,6 +532,9 @@
     <string name="shell_server_start_failed">启动失败</string>
     <!-- MUSE: shell 权限页（Task 12）：无线调试检测 + 6 位码配对 -->
     <string name="shell_server_last_failure">上次失败：%1$s</string>
+    <string name="shell_fail_no_port">没找到无线调试端口，重开一次「无线调试」再试。</string>
+    <string name="shell_fail_connect">连不上无线调试（%1$s）。确认手机和 Muse 在同一网络，必要时重开「无线调试」。</string>
+    <string name="shell_fail_binder">启动命令已执行，但服务没有起来。</string>
     <string name="shell_wadb_title">无线调试</string>
     <string name="shell_wadb_on">已开启</string>
     <string name="shell_wadb_off">未开启</string>
@@ -545,11 +549,15 @@
     <string name="shell_pairing_fail_wrong">配对码不对，请重新配对再输一遍。</string>
     <string name="shell_pairing_fail_timeout">连接超时，确认无线调试已开启后再试。</string>
     <string name="shell_pairing_fail_discovery">没找到配对服务，重开一次「无线调试」再试。</string>
+    <string name="shell_pairing_fail_keystore">手机的密钥库没能存下配对密钥，重启手机后再试。</string>
     <string name="shz_strip">需要 shell 权限</string>
     <string name="shz_jit_body">“%1$s”要用 shell 权限才能直接完成。准备好后会自动继续。</string>
     <string name="shz_title_install">配对 shell 权限</string>
     <string name="shz_body_install">配对一次（6 位码，只需一次），Muse 就能免 root 开关 Wi‑Fi、蓝牙和移动数据，修改系统设置，输入文字也更稳。</string>
     <string name="shz_step1">在「开发者选项」中打开「无线调试」（没有开发者选项？到「关于手机」连点「版本号」7 次）</string>
+    <string name="shz_step1_root">打开 设置 → 手机权限 → shell 服务</string>
+    <string name="shz_step2_root">已 root：打开「root 自启」后点「启动」；未 root：在电脑上执行页面里的手动启动命令</string>
+    <string name="shz_step3_root">回到 Muse，等 shell 服务就绪</string>
     <string name="shz_step2">到 设置 → 手机权限 → shell 权限 点「开始配对」，输入手机弹窗里的 6 位配对码</string>
     <string name="shz_step3">配对成功后点「启动」，服务起来 Muse 会自动请求授权</string>
     <string name="shz_title_stopped">shell 服务没有运行</string>

@@ -49,9 +49,12 @@ class ShellPairing @Inject constructor(
         _step.value = PairingStep.WaitingCode
     }
 
-    /** 用户提交 6 位码：配对 → 存密钥 → 立即连接。 */
+    /** 用户提交 6 位码：配对 → 存密钥 → 立即连接。AndroidKeyStore 可能抛异常（厂商 bug/损坏），降级成 KEYSTORE 失败不崩 UI。 */
     suspend fun submitCode(code: String) {
-        val key = MuseAdbKeys.createKey(keyStorage)
+        val key = runCatching { MuseAdbKeys.createKey(keyStorage) }.getOrElse {
+            _step.value = PairingStep.Failed(PairFailure.KEYSTORE)
+            return
+        }
         val result = museAdb.pair(key, pairingPort, code)
         if (!result.success) {
             _step.value = PairingStep.Failed(result.reason ?: PairFailure.TIMEOUT)

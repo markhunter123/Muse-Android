@@ -30,16 +30,16 @@ enum class ConnectionStatus { IDLE, CONNECTING, STARTING, FAILED }
 object ShellServerCommands {
 
     /** starter 的调用形态：libmuse_starter.so 自带 --apk 参数，内部 CLASSPATH 指向 Muse 的 APK 拉起 app_process。 */
-    fun starterCommand(apkPath: String, nativeLibDir: String): String =
-        "$nativeLibDir/libmuse_starter.so --apk=$apkPath"
+    fun starterCommand(apkPath: String, nativeLibDir: String, packageName: String): String =
+        "$nativeLibDir/libmuse_starter.so --apk=$apkPath --package=$packageName"
 
     /** root 路径：su -c 执行 starter。展示用；实际 exec 走数组形式（见 [ShellServerController]）。 */
-    fun rootCommand(starter: String, apkPath: String): String =
-        "su -c '$starter --apk=$apkPath'"
+    fun rootCommand(starter: String, apkPath: String, packageName: String): String =
+        "su -c '$starter --apk=$apkPath --package=$packageName'"
 
     /** 手动路径：用户在电脑上执行的 adb shell 行（UI 一键复制）。 */
-    fun manualCommand(starter: String, apkPath: String): String =
-        "adb shell $starter --apk=$apkPath"
+    fun manualCommand(starter: String, apkPath: String, packageName: String): String =
+        "adb shell $starter --apk=$apkPath --package=$packageName"
 }
 
 /**
@@ -62,13 +62,13 @@ class ShellServerController @Inject constructor(
     private val prefs = context.getSharedPreferences("shell_boot", Context.MODE_PRIVATE)
 
     init {
-        // 开机自启失败后的前台重试：回前台时若上次开机没起来，再试一次。
-        // ProcessLifecycleOwner 在单测环境可能未初始化——跳过钩子即可。
+        // 回前台自动重连（spec 触发点：冷启/回前台）：已配对且 binder 未就绪就试一次，
+        // 覆盖安装杀掉 server、开机自启失败都靠这里拉起。ProcessLifecycleOwner 在单测环境可能未初始化——跳过钩子即可。
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
             runCatching {
                 ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
                     override fun onStart(owner: LifecycleOwner) {
-                        CoroutineScope(Dispatchers.IO).launch { if (prefs.getBoolean(KEY_BOOT_RETRY, false)) tryAutoStart() }
+                        CoroutineScope(Dispatchers.IO).launch { onForeground() }
                     }
                 })
             }
@@ -80,9 +80,9 @@ class ShellServerController @Inject constructor(
         val current = shell.refresh()
         if (current.ready) return@withContext current
         if (Build.VERSION.SDK_INT >= 30) {
-            val key = MuseAdbKeys.loadKey(keyStorage)
-            val info = context.applicationInfo
-            val starterCmd = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir)
+            val key = runCatching { MuseAdbKeys.loadKey(keyStorage) }.getOrNull()
+            if (key == null) return@withContext if (settings.current().shellRoot) startRoot() else shell.refresh()
+            val starterCmd = starterCommand()
             _connection.value = ConnectionStatus.CONNECTING
             when (val outcome = launcher.launch(key, starterCmd, ::pollBinder)) {
                 AdbLaunchOutcome.Started -> {
@@ -108,14 +108,28 @@ class ShellServerController @Inject constructor(
     }
 
     /**
+     * 回前台自动重连（spec 触发点：冷启/回前台）：已配对且 binder 未就绪才试（[tryAutoStart] 的门禁壳）。
+     * key/pollBinder/starterCmd 是测试注入口，真机走默认值。
+     */
+    suspend fun onForeground(
+        pollBinder: suspend () -> Boolean = ::pollBinder,
+        key: AdbKey? = resolveKey(),
+        starterCmd: String = starterCommand(),
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (shell.refresh().ready) return@withContext false
+        if (key == null) return@withContext false
+        tryAutoStart(pollBinder, key, starterCmd)
+    }
+
+    /**
      * 开机自启试一次（[ShellBootReceiver] 调用）：已配对才走无线路径，失败静默记 pref，下次回前台重试。
      * 预算比 ensureRunning 小（receiver goAsync 内 ~20s 上限）；connection 状态不打扰 UI。
-     * key/pollBinder/starterCmd 是测试注入口，真机走默认的密钥文件解析、Shizuku.pingBinder 与 applicationInfo 拼接。
+     * key/pollBinder/starterCmd 是测试注入口，真机走默认值。
      */
     suspend fun tryAutoStart(
         pollBinder: suspend () -> Boolean = ::pollBinder,
         key: AdbKey? = resolveKey(),
-        starterCmd: String = ShellServerCommands.starterCommand(context.applicationInfo.sourceDir, context.applicationInfo.nativeLibraryDir),
+        starterCmd: String = starterCommand(),
     ): Boolean = withContext(Dispatchers.IO) {
         if (shell.refresh().ready) return@withContext true
         if (key == null) return@withContext false
@@ -127,22 +141,29 @@ class ShellServerController @Inject constructor(
         started
     }
 
-    private fun resolveKey(): AdbKey? = if (Build.VERSION.SDK_INT >= 30) MuseAdbKeys.loadKey(keyStorage) else null
+    /** AndroidKeyStore 可能抛异常（厂商 bug、keystore 损坏）：吞掉降级成"没配对"，不崩启动链。 */
+    private fun resolveKey(): AdbKey? =
+        if (Build.VERSION.SDK_INT >= 30) runCatching { MuseAdbKeys.loadKey(keyStorage) }.getOrNull() else null
 
     private suspend fun pollBinder(): Boolean =
         runCatching { Shizuku.pingBinder() }.getOrDefault(false)
 
+    private fun starterCommand(): String {
+        val info = context.applicationInfo
+        return ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir, context.packageName)
+    }
+
     private fun failureReason(outcome: AdbLaunchOutcome): String = when (outcome) {
-        is AdbLaunchOutcome.ConnectFailed -> "adb connect failed: ${outcome.log}"
-        AdbLaunchOutcome.NoPort -> "wireless debugging port not found"
-        AdbLaunchOutcome.BinderTimeout -> "starter ran but binder did not come up"
+        is AdbLaunchOutcome.ConnectFailed -> REASON_CONNECT_PREFIX + outcome.log
+        AdbLaunchOutcome.NoPort -> REASON_NO_PORT
+        AdbLaunchOutcome.BinderTimeout -> REASON_BINDER_TIMEOUT
         else -> "unreachable"
     }
 
     private suspend fun startRoot(): ShellState {
         _connection.value = ConnectionStatus.CONNECTING
         val info = context.applicationInfo
-        val inner = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir)
+        val inner = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir, context.packageName)
         // su -c 的命令体是单个参数：Runtime.exec 的字符串重载按空格切参、引号会被当字面量，必须走数组。
         runCatching {
             val p = Runtime.getRuntime().exec(arrayOf("su", "-c", inner))
@@ -167,10 +188,15 @@ class ShellServerController @Inject constructor(
     /** 给 UI 复制的手动启动命令（adb shell …）。 */
     fun manualCommand(): String {
         val info = context.applicationInfo
-        return ShellServerCommands.manualCommand("${info.nativeLibraryDir}/libmuse_starter.so", info.sourceDir)
+        return ShellServerCommands.manualCommand("${info.nativeLibraryDir}/libmuse_starter.so", info.sourceDir, context.packageName)
     }
 
-    private companion object {
+    companion object {
+        /** 失败原因常量（[io.github.markhunter123.muse.feature.settings.ShellGuide.shellStateHint] 按此映射本地化文案）。 */
+        const val REASON_NO_PORT = "wireless debugging port not found"
+        const val REASON_BINDER_TIMEOUT = "starter ran but binder did not come up"
+        const val REASON_CONNECT_PREFIX = "adb connect failed: "
+
         const val START_TIMEOUT_MS = 30_000L
         /** 开机自启预算（receiver goAsync 内）：mDNS 发现 10s + binder 轮询 5×1s，总预算 ~20s 内。 */
         const val BOOT_DISCOVER_TIMEOUT_MS = 10_000L

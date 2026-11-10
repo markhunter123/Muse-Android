@@ -98,4 +98,20 @@ class ShellServerControllerTest {
 
     private fun testKey(storage: MemKeyStorage): AdbKey =
         moe.shizuku.server.muse.MuseAdbKeys.createKey(storage, softwareAesKey())
+
+    /** 回前台自动重连：已配对且未就绪才试（覆盖安装杀掉 server 后的自动拉起）。 */
+    @Test fun `on foreground, a paired but not ready server is restarted`() = runTest {
+        val adb = FakeMuseAdb()
+        val storage = MemKeyStorage().apply { save(ByteArray(16)) }
+        val c = controller(adb, storage)
+        assertTrue(c.onForeground(key = testKey(storage), pollBinder = { true }, starterCmd = starter))
+        assertTrue(adb.calls.any { it.startsWith("connect:5555:") })
+    }
+
+    @Test fun `on foreground, an unpaired server is left alone`() = runTest {
+        val adb = FakeMuseAdb()
+        val c = controller(adb, MemKeyStorage())
+        assertFalse(c.onForeground(key = null, pollBinder = { true }, starterCmd = starter))
+        assertTrue(adb.calls.isEmpty())
+    }
 }

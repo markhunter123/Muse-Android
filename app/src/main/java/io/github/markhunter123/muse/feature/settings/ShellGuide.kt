@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -98,13 +99,26 @@ fun shellStateLabel(context: Context, s: ShellState): String = when (s) {
 
 /** The next step for the state in one line (Doctor rows, the card's caption); null when ready. */
 fun shellStateHint(context: Context, s: ShellState): String? = when (s) {
-    ShellState.NotPaired -> context.getString(R.string.shz_hint_missing)
-    is ShellState.PairedNotRunning -> if (s.reason.isEmpty()) context.getString(R.string.shz_hint_start)
-        else context.getString(R.string.shell_server_last_failure, s.reason)
+    ShellState.NotPaired -> context.getString(if (Build.VERSION.SDK_INT < 30) R.string.shz_hint_missing_root else R.string.shz_hint_missing)
+    is ShellState.PairedNotRunning -> if (s.reason.isEmpty()) context.getString(R.string.shz_hint_start) else failureText(context, s.reason)
     is ShellState.RunningNoPermission -> context.getString(if (s.denied) R.string.shz_hint_denied else R.string.shz_hint_permission)
     is ShellState.Unsupported -> context.getString(R.string.shz_hint_old)
     ShellState.Ready -> null
 }
+
+/** 已知失败原因映射本地化文案（含"重开无线调试"指引，[ShellServerController] 的常量对齐）；没见过的保持原样。 */
+private fun failureText(context: Context, reason: String): String = when {
+    reason == ShellServerController.REASON_NO_PORT -> context.getString(R.string.shell_fail_no_port)
+    reason == ShellServerController.REASON_BINDER_TIMEOUT -> context.getString(R.string.shell_fail_binder)
+    reason.startsWith(ShellServerController.REASON_CONNECT_PREFIX) ->
+        context.getString(R.string.shell_fail_connect, reason.removePrefix(ShellServerController.REASON_CONNECT_PREFIX))
+    else -> context.getString(R.string.shell_server_last_failure, reason)
+}
+
+/** 配对步骤按 SDK 分流：Android 10 及以下没有无线调试，指路应用内启动（root / 手动命令）。 */
+fun pairingSteps(sdk: Int): List<Int> =
+    if (sdk < 30) listOf(R.string.shz_step1_root, R.string.shz_step2_root, R.string.shz_step3_root)
+    else listOf(R.string.shz_step1, R.string.shz_step2, R.string.shz_step3)
 
 /**
  * The one-tap fix for the current state (Doctor rows), or null when there is nothing to open:
@@ -168,7 +182,7 @@ fun ColumnScope.ShellGuideBody(s: ShellState, toolTitle: String?, flow: ShellGui
     }
     Text(body, style = DshType.xs13, color = if (toolTitle != null) c.labelTertiary else c.labelSecondary)
     if (s == ShellState.NotPaired) {
-        listOf(R.string.shz_step1, R.string.shz_step2, R.string.shz_step3).forEachIndexed { i, step ->
+        pairingSteps(Build.VERSION.SDK_INT).forEachIndexed { i, step ->
             Row(verticalAlignment = Alignment.Top) {
                 Text("${i + 1}", Modifier.width(16.dp), style = DshType.xs13m, color = c.labelTertiary)
                 Text(stringResource(step), style = DshType.xs13, color = c.labelSecondary)

@@ -85,7 +85,8 @@ fun ShellServerScreen(onBack: () -> Unit) {
                 if (connText.isNotEmpty()) Text(connText, style = DshType.xxs12, color = c.labelTertiary)
                 (s as? ShellState.PairedNotRunning)?.takeIf { it.reason.isNotEmpty() }?.let {
                     Text(
-                        stringResource(R.string.shell_server_last_failure, it.reason),
+                        // 已知失败原因给本地化文案（含重开无线调试指引），没见过的保持原样（shellStateHint 内部映射）
+                        shellStateHint(context, s) ?: "",
                         style = DshType.xxs12, color = c.labelTertiary,
                     )
                 }
@@ -133,6 +134,7 @@ fun ShellServerScreen(onBack: () -> Unit) {
                                         PairFailure.WRONG_CODE -> R.string.shell_pairing_fail_wrong
                                         PairFailure.TIMEOUT -> R.string.shell_pairing_fail_timeout
                                         PairFailure.DISCOVERY -> R.string.shell_pairing_fail_discovery
+                                        PairFailure.KEYSTORE -> R.string.shell_pairing_fail_keystore
                                     }
                                 ),
                                 style = DshType.xxs12, color = c.labelTertiary,
