@@ -30,6 +30,7 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.os.ServiceManager;
+import android.system.Os;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -177,7 +178,15 @@ public class ShizukuService extends Service<ShizukuUserServiceManager, ShizukuCl
 
     @Override
     public void attachUserService(IBinder binder, Bundle options) {
-        enforceManagerPermission("func");
+        // MUSE: 内嵌架构下 user service 的 starter 是 server 自己用 Runtime.exec("sh") 拉起的
+        // shell uid 子进程（UserServiceManager.startUserService），它直接经 provider 的
+        // getBinder 取回 server binder 后 attach。上游的 attach 由 manager app 的 provider
+        // 中转（sendUserService 链路），fork 里不存在那条路；这里放行与 server 同 uid 的
+        // 调用方（即我们自己 spawn 的 starter），其余调用方仍走 manager 校验。token 的
+        // 真实校验在 UserServiceManager.attachUserService（sendUserServiceLocked）。
+        if (Binder.getCallingUid() != Os.getuid()) {
+            enforceManagerPermission("func");
+        }
 
         super.attachUserService(binder, options);
     }

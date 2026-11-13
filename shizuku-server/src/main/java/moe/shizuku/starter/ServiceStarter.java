@@ -12,6 +12,7 @@ import android.util.Pair;
 import java.util.Locale;
 
 import moe.shizuku.api.BinderContainer;
+import moe.shizuku.server.IShizukuService;
 import moe.shizuku.starter.util.IContentProviderCompat;
 import rikka.hidden.compat.ActivityManagerApis;
 import rikka.shizuku.ShizukuApiConstants;
@@ -93,9 +94,11 @@ public class ServiceStarter {
     }
 
     private static boolean sendBinder(IBinder binder, String token, boolean retry) {
-        // MUSE: user service binder goes back to Muse's provider (we are the manager)。
-        // 包名跟随 starter 的 --package（ServerConstants 读 MUSE_MANAGER_PACKAGE 环境变量，
-        // 没设就退回正式包名）——debug 构建的 provider authority 是 ${applicationId}.shizuku。
+        // MUSE: 内嵌架构下 Muse 自己就是 manager。库里 rikka.shizuku.ShizukuProvider 只处理
+        // sendBinder / getBinder 两个 method——上游经 manager app 中转的 sendUserService 链路
+        // 在 fork 里不存在（App 端没有对应实现，call 会得到空回复，starter 静默 exit(1)，
+        // 表现为 app 侧 30s bind 超时）。因此 starter 直接经 getBinder 取回 server binder，
+        // 再调 server.attachUserService 完成回传；token 匹配在 server 侧 UserServiceManager。
         String packageName = ServerConstants.MANAGER_APPLICATION_ID;
         String name = packageName + ".shizuku";
         int userId = 0;
@@ -125,16 +128,11 @@ public class ServiceStarter {
                 Log.e(TAG, "retry works");
             }
 
-            Bundle extra = new Bundle();
-            extra.putParcelable(EXTRA_BINDER, new BinderContainer(binder));
-            extra.putString(ShizukuApiConstants.USER_SERVICE_ARG_TOKEN, token);
-
-            Bundle reply = IContentProviderCompat.call(provider, null, null, name, "sendUserService", null, extra);
+            Bundle reply = IContentProviderCompat.call(provider, null, null, name, "getBinder", null, null);
 
             if (reply != null) {
                 reply.setClassLoader(BinderContainer.class.getClassLoader());
 
-                Log.i(TAG, String.format("send binder to %s in user %d", packageName, userId));
                 BinderContainer container = reply.getParcelable(EXTRA_BINDER);
 
                 if (container != null && container.binder != null && container.binder.pingBinder()) {
@@ -143,6 +141,12 @@ public class ServiceStarter {
                         Log.i(TAG, "exiting...");
                         System.exit(0);
                     }, 0);
+
+                    Bundle options = new Bundle();
+                    options.putString(ShizukuApiConstants.USER_SERVICE_ARG_TOKEN, token);
+                    IShizukuService.Stub.asInterface(container.binder).attachUserService(binder, options);
+
+                    Log.i(TAG, String.format("user service binder attached to server via %s in user %d", packageName, userId));
                     return true;
                 } else {
                     Log.w(TAG, "server binder not received");

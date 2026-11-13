@@ -22,8 +22,6 @@ import moe.shizuku.server.IShizukuApplication;
 import moe.shizuku.server.IShizukuService;
 import moe.shizuku.server.IShizukuServiceConnection;
 import rikka.hidden.compat.PermissionManagerApis;
-import rikka.rish.RishConfig;
-import rikka.rish.RishService;
 import rikka.shizuku.ShizukuApiConstants;
 import rikka.shizuku.server.api.RemoteProcessHolder;
 import rikka.shizuku.server.util.Logger;
@@ -38,23 +36,14 @@ public abstract class Service<
     private final UserServiceMgr userServiceManager;
     private final ConfigMgr configManager;
     private final ClientMgr clientManager;
-    private final RishService rishService;
 
     protected static final Logger LOGGER = new Logger("Service");
 
+    // MUSE: rish 整体裁掉（fork 决策）——RishConfig.init 会在无 librish.so 的内嵌构建里抛 UnsatisfiedLinkError，server 永远起不来
     public Service() {
-        RishConfig.init(ShizukuApiConstants.BINDER_DESCRIPTOR, 30000);
-
         userServiceManager = onCreateUserServiceManager();
         configManager = onCreateConfigManager();
         clientManager = onCreateClientManager();
-        rishService = new RishService() {
-
-            @Override
-            public void enforceCallingPermission(String func) {
-                Service.this.enforceCallingPermission(func);
-            }
-        };
     }
 
     public abstract UserServiceMgr onCreateUserServiceManager();
@@ -338,8 +327,6 @@ public abstract class Service<
             args.putInt(ShizukuApiConstants.ATTACH_APPLICATION_API_VERSION, -1);
             attachApplication(IShizukuApplication.Stub.asInterface(binder), args);
             reply.writeNoException();
-            return true;
-        } else if (rishService.onTransact(code, data, reply, flags)) {
             return true;
         }
         return super.onTransact(code, data, reply, flags);

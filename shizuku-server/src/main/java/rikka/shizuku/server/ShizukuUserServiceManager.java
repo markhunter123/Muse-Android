@@ -24,6 +24,17 @@ public class ShizukuUserServiceManager extends UserServiceManager {
     }
 
     @Override
+    protected void onPreStartUserService() {
+        // MUSE: spawn 前把 server binder 现推一次给 manager 的 provider——
+        // starter 经 getBinder 取回，App 侧单例必须在这一刻是活的
+        ShizukuService service = BinderSender.getServer();
+        if (service != null) {
+            LOGGER.v("push server binder to manager before spawning user service");
+            ShizukuService.sendBinderToManger(service, 0);
+        }
+    }
+
+    @Override
     public String getUserServiceStartCmd(
             UserServiceRecord record, String key, String token, String packageName,
             String classname, String processNameSuffix, int callingUid, boolean use32Bits, boolean debug) {

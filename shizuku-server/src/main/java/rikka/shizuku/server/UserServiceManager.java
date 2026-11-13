@@ -217,6 +217,11 @@ public abstract class UserServiceManager {
 
         LOGGER.v("Starting process for service record %s (%s)...", key, token);
 
+        // MUSE: starter 回传 binder 依赖 manager App 的 provider（getBinder 路线），
+        // 而 App 进程随时可能被系统杀掉重启（国产 ROM 后台管理），server 启动时推的
+        // 那次 binder 早已随进程消失。每次 spawn 前现推一次，保证 starter 读到活 binder。
+        onPreStartUserService();
+
         String cmd = getUserServiceStartCmd(record, key, token, packageName, classname, processNameSuffix, callingUid, use32Bits && AbiUtil.has32Bit(), debug);
         int exitCode;
         try {
@@ -238,6 +243,10 @@ public abstract class UserServiceManager {
     public abstract String getUserServiceStartCmd(
             UserServiceRecord record, String key, String token, String packageName,
             String classname, String processNameSuffix, int callingUid, boolean use32Bits, boolean debug);
+
+    /** MUSE: called right before the user service process is spawned. */
+    protected void onPreStartUserService() {
+    }
 
     private void sendUserServiceLocked(IBinder binder, String token) {
         Map.Entry<String, UserServiceRecord> entry = null;

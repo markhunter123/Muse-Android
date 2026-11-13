@@ -170,6 +170,11 @@ public class BinderSender {
         }
     }
 
+    /** MUSE: 包内访问当前 server 实例（onPreStartUserService 推 binder 用）。 */
+    static ShizukuService getServer() {
+        return sShizukuService;
+    }
+
     public static void register(ShizukuService shizukuService) {
         sShizukuService = shizukuService;
 
