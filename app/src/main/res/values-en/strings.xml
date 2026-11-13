@@ -497,6 +497,7 @@
     <string name="usage_none">No usage yet</string>
     <string name="set_phone_desc">The agent asks for these when a task first needs them. Review or grant them ahead of time here.</string>
     <string name="granted">Granted</string>
+    <string name="revoke">Revoke</string>
     <string name="set_more">More</string>
     <string name="notification_apps">Apps whose notifications can be read (all by default)</string>
     <string name="notification_apps_desc">All apps\' notifications are readable by default; exclude the ones you want kept private</string>

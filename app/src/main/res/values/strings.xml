@@ -497,6 +497,7 @@
     <string name="usage_none">暂无用量</string>
     <string name="set_phone_desc">智能体用到某项能力时才会请你授权。这里可以查看和提前授予。</string>
     <string name="granted">已授权</string>
+    <string name="revoke">取消授权</string>
     <string name="set_more">更多</string>
     <string name="notification_apps">允许读取通知的应用（默认全部）</string>
     <string name="notification_apps_desc">默认可以读取所有 App 的通知，可在这里排除不想让它读的 App</string>

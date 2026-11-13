@@ -500,7 +500,16 @@ private fun PhoneSection(vm: SettingsViewModel, onNotificationApps: () -> Unit, 
             SettingsRow(p.title(zh), p.why(zh), divider = i > 0,
                 leading = { StateDot(if (granted) DotKind.Done else DotKind.Idle) },
                 trailing = {
-                    if (granted) Text(stringResource(R.string.granted), style = DshType.xs13, color = c.labelTertiary)
+                    if (granted) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(stringResource(R.string.granted), style = DshType.xs13, color = c.labelTertiary)
+                            // 授权也能撤销：跳到对应的系统页面把开关关掉（运行时权限在应用详情页）
+                            DButton(stringResource(R.string.revoke), {
+                                val i = p.revokeIntent(context) ?: p.intent(context) ?: PermissionCatalog.appDetails(context)
+                                runCatching { context.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                            }, variant = BtnVariant.Outline, size = BtnSize.Sm)
+                        }
+                    }
                     else DButton(stringResource(if (p.id in blocked) R.string.open_system_settings else R.string.go_grant), {
                         val rt = p.runtime
                         if (rt != null && p.id !in blocked) { requested = p.id; runtime.launch(rt.toTypedArray()) }

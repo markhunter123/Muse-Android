@@ -30,6 +30,8 @@ data class PermissionItem(
     val restrictedSetting: Boolean = false,
     val check: (Context) -> Boolean,
     val intent: (Context) -> Intent? = { null },
+    /** Where to send the user to take the grant away; null falls back to [intent], then the app's settings page. */
+    val revokeIntent: (Context) -> Intent? = { null },
 ) {
     fun title(zh: Boolean) = if (zh) titleZh else titleEn
     fun why(zh: Boolean) = if (zh) whyZh else whyEn
@@ -58,7 +60,9 @@ object PermissionCatalog {
         PermissionItem("battery", "不受电池优化限制", "Unrestricted battery", "锁屏和后台时也能执行任务、调用模型", "Run tasks and reach the model while the phone sleeps",
             ToolGroup.entries.toSet(),
             check = { it.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(it.packageName) },
-            intent = { Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri(it)) }),
+            intent = { Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, pkgUri(it)) },
+            // REQUEST_* 弹的是"允许"对话框，已授权时没用；取消要走总列表页（每行一个开关）
+            revokeIntent = { Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS) }),
         PermissionItem("files", "所有文件访问", "All files access", "查找、整理、清理你的文件", "Find, organise and clean up files",
             setOf(ToolGroup.Files),
             // Android 10 has no "All files access"; legacy storage + WRITE_EXTERNAL_STORAGE covers it there.
