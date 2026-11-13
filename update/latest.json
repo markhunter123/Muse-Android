@@ -1,21 +1,21 @@
 {
   "format": 1,
   "packageName": "io.github.markhunter123.muse",
-  "versionCode": 25,
-  "versionName": "0.3.7",
+  "versionCode": 30,
+  "versionName": "0.1.4",
   "minSdk": 29,
   "apk": {
-    "name": "Muse-Android-v0.3.7-arm64.apk",
-    "size": 100585702,
-    "sha256": "b08af83dc2d64d332357c488f3664f445e20eda1409a5f2f578f2d1836deb02b",
+    "name": "Muse-Android-v0.1.4-arm64.apk",
+    "size": 109513308,
+    "sha256": "ed9b42af4975c920e0abd22c660ff700e2e7a1b0b867600083ecea8d9615c114",
     "urls": [
-      "https://github.com/markhunter123/Muse-Android/releases/download/v0.3.7/Muse-Android-v0.3.7-arm64.apk"
+      "https://github.com/markhunter123/Muse-Android/releases/download/v0.1.4/Muse-Android-v0.1.4-arm64.apk"
     ]
   },
-  "signerSha256": "2b37a375ead19476e5d0d9e38920032ea9822e880dcc7540a14e5ab6ac1f4f69",
+  "signerSha256": "cf8faa88aa2843fa3885aa52c04167c36a55bc9626a9c1f5e1a2fe230c937c4f",
   "notes": {
-    "zh": "- Muse-Android 首个版本（基于上游 DSH-Android v0.3.7，Apache-2.0）\n- 发布新版本时用 tools/make-update-manifest.py 重新生成本文件并替换 apk 的 size / sha256 / urls",
-    "en": "- First Muse-Android release (based on upstream DSH-Android v0.3.7, Apache-2.0)\n- Regenerate this file with tools/make-update-manifest.py and replace the apk size / sha256 / urls when publishing a new release"
+    "zh": "- 修复部分机型（华为 ROM）shell 服务启动超时：agent 执行 shell 命令不再报「did not start within 30 s」\n- 手机权限：已授权的条目新增「取消授权」按钮，可跳转系统页面撤销授权\n- 「shell 权限」入口去掉「（实验）」字样",
+    "en": "- Fix shell service bind timeout on some devices (Huawei ROM): agent shell commands no longer fail with \"did not start within 30 s\"\n- Phone permissions: granted entries now have a Revoke button that opens the matching system page\n- Drop the \"(experimental)\" marker from the shell access entry"
   },
-  "publishedAt": "2026-11-02T00:00:00Z"
+  "publishedAt": "2026-11-13T14:45:16Z"
 }
