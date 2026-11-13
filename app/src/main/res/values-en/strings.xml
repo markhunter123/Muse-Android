@@ -524,7 +524,7 @@
     <string name="shz_hint_old">Restart the shell server (Settings → Phone permissions → Shell access)</string>
     <string name="shz_group">Enhanced access · Shell</string>
     <!-- MUSE: embedded shell server card (Phone permissions, experimental; becomes the only entry once the official path is removed) -->
-    <string name="shell_server_title">Shell access (experimental)</string>
+    <string name="shell_server_title">Shell access</string>
     <string name="shell_server_root_hint">On a rooted phone, start the embedded service in one tap; it stops at reboot — tap again.</string>
     <string name="shell_server_manual_hint">Without root: run one adb start command on a computer; repeat after a phone reboot.</string>
     <string name="shell_server_manual_copy">Copy manual start command</string>
