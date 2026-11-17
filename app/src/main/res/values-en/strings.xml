@@ -7,6 +7,7 @@
     <string name="engine_running">Agent engine running</string>
     <string name="monitor_running">Watching for automation triggers</string>
     <string name="ball_running">Floating button active</string>
+    <string name="ball_open_fallback">Tap to open Muse</string>
     <string name="ball_working">The agent is working</string>
     <string name="ball_needs_you">A conversation needs you</string>
     <string name="ball_screen_needs_a11y">Turn on Muse\'s accessibility service to send the current screen</string>

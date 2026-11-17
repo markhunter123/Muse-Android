@@ -1,4 +1,5 @@
+<!-- MUSE: 需要注意状态——琥珀底保留（警示色），图形用纯黑 Mu（白字在琥珀上对比度差） -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item><shape android:shape="oval"><solid android:color="#F59E0B"/></shape></item>
-    <item android:inset="12dp" android:drawable="@drawable/ic_stat_dsh"/>
+    <item android:inset="12dp" android:drawable="@drawable/ic_ball_glyph"/>
 </layer-list>

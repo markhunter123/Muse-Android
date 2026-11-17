@@ -1,4 +1,5 @@
+<!-- MUSE: 纯白底 + 纯黑 Mu -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item><shape android:shape="oval"><solid android:color="#E60F1115"/></shape></item>
-    <item android:inset="12dp" android:drawable="@drawable/ic_stat_dsh"/>
+    <item><shape android:shape="oval"><solid android:color="#FFFFFFFF"/></shape></item>
+    <item android:inset="12dp" android:drawable="@drawable/ic_ball_glyph"/>
 </layer-list>

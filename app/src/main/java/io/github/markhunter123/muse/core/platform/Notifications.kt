@@ -23,6 +23,8 @@ object Notifications {
     const val ID_ENGINE = 1
     const val ID_MONITOR = 2
     const val ID_BALL = 3
+    /** Heads-up "tap to open" when MagicOS drops both background starts from the floating ball. */
+    const val ID_BALL_FALLBACK = 7
     const val ID_UPDATE = 4
     const val ID_WAKE = 6
     /** The group summary over several conversations' notifications. */

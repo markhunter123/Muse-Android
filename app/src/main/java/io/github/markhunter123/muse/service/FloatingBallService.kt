@@ -96,9 +96,12 @@ class FloatingBallService : Service() {
     private var shotHides = 0
     private var hiddenAt = 0L
     private var destroyed = false
+    // MUSE: RESUMED 粒度而不是 STARTED——MagicOS 拦后台启动时会把 Activity 创建成"已启动但暂停"
+    //（从不显示），STARTED 粒度会把这种幽灵 Activity 误判成"已在前台"，球会自己藏起来、
+    // launchUi 的自愈阶梯也会提前退出。只有真正 RESUMED 才算在前台。
     private val appInFront = object : DefaultLifecycleObserver {
-        override fun onStart(owner: LifecycleOwner) { inFront = true; render() }
-        override fun onStop(owner: LifecycleOwner) { inFront = false; render() }
+        override fun onResume(owner: LifecycleOwner) { inFront = true; render() }
+        override fun onPause(owner: LifecycleOwner) { inFront = false; render() }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -407,12 +410,31 @@ class FloatingBallService : Service() {
     /** A tap: the conversation waiting for the user or running (never a new one while a task runs, #39), else the quick panel. */
     private fun open() = go(TapTargets.ball(store.status.value, capsuleSession, QuickActivity.panelSession(this)))
 
-    private fun go(target: TapTarget) = ActivityStarts.start(this, when (target) {
+    private fun go(target: TapTarget) = launchUi(when (target) {
         is TapTarget.Conversation -> Intent(this, MainActivity::class.java).putExtra(MainActivity.EXTRA_SESSION, target.sessionId)
         is TapTarget.Panel -> Intent(this, QuickActivity::class.java).apply { target.sessionId?.let { putExtra(QuickActivity.EXTRA_SESSION, it) } }
     })
 
-    private fun openVoice() = ActivityStarts.start(this, Intent(this, QuickActivity::class.java).putExtra(QuickActivity.EXTRA_VOICE, true))
+    private fun openVoice() = launchUi(Intent(this, QuickActivity::class.java).putExtra(QuickActivity.EXTRA_VOICE, true))
+
+    /**
+     * MUSE: MagicOS 对后台启动既不抛异常也不放行（假成功），所以 [ActivityStarts.start] 返回后必须
+     * 校验"真的到前台了吗"。没到 → 换带后台特权的 PendingIntent 路径重试；还没到 → 发一条顶置通知，
+     * 点通知是用户交互，任何 ROM 都放行。三步走完，最差也保住"点一下能进 App"。
+     */
+    private fun launchUi(intent: Intent) {
+        ActivityStarts.start(this, intent)
+        scope.launch {
+            delay(1200)
+            if (inFront || destroyed) return@launch
+            ActivityStarts.viaPendingIntent(this@FloatingBallService, intent)
+            delay(1200)
+            if (inFront || destroyed) return@launch
+            Notifications.post(this@FloatingBallService, Notifications.CHANNEL_ATTENTION, Notifications.ID_BALL_FALLBACK,
+                getString(R.string.app_name), getString(R.string.ball_open_fallback), null,
+                Notifications.openRunning(this@FloatingBallService))
+        }
+    }
 
     override fun onDestroy() {
         destroyed = true

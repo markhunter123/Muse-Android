@@ -1,0 +1,5 @@
+<!-- MUSE: 悬浮球专用的纯黑 Mu（ic_launcher_fg 原图是深灰 #3A3A3C，这里 tint 成纯黑）。
+     不复用 ic_stat_dsh——那是通知栏剪影用的白色 tint，不能动。 -->
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android"
+    android:src="@drawable/ic_launcher_fg"
+    android:tint="#FF000000" />

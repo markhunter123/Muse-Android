@@ -1,4 +1,5 @@
+<!-- MUSE: 工作中状态——纯白底 + 纯黑 Mu，蓝环保留标识状态 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item><shape android:shape="oval"><solid android:color="#E60F1115"/><stroke android:width="2dp" android:color="#4176E6"/></shape></item>
-    <item android:inset="12dp" android:drawable="@drawable/ic_stat_dsh"/>
+    <item><shape android:shape="oval"><solid android:color="#FFFFFFFF"/><stroke android:width="2dp" android:color="#4176E6"/></shape></item>
+    <item android:inset="12dp" android:drawable="@drawable/ic_ball_glyph"/>
 </layer-list>

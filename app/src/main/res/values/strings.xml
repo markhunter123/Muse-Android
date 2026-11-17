@@ -7,6 +7,7 @@
     <string name="engine_running">Agent 引擎运行中</string>
     <string name="monitor_running">正在监听自动化触发条件</string>
     <string name="ball_running">悬浮球已开启</string>
+    <string name="ball_open_fallback">点这里打开 Muse</string>
     <string name="ball_working">智能体正在工作</string>
     <string name="ball_needs_you">有对话需要你处理</string>
     <string name="ball_screen_needs_a11y">开启 Muse 的无障碍服务后才能发送当前屏幕</string>
