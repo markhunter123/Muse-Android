@@ -1,21 +1,21 @@
 {
   "format": 1,
   "packageName": "io.github.markhunter123.muse",
-  "versionCode": 30,
-  "versionName": "0.1.4",
+  "versionCode": 31,
+  "versionName": "0.1.5",
   "minSdk": 29,
   "apk": {
-    "name": "Muse-Android-v0.1.4-arm64.apk",
-    "size": 109513308,
-    "sha256": "ed9b42af4975c920e0abd22c660ff700e2e7a1b0b867600083ecea8d9615c114",
+    "name": "Muse-Android-v0.1.5-arm64.apk",
+    "size": 109528011,
+    "sha256": "75046151d68c3829b586056d329f36eb3f5944d5382215c5f042a368d86c7710",
     "urls": [
-      "https://github.com/markhunter123/Muse-Android/releases/download/v0.1.4/Muse-Android-v0.1.4-arm64.apk"
+      "https://github.com/markhunter123/Muse-Android/releases/download/v0.1.5/Muse-Android-v0.1.5-arm64.apk"
     ]
   },
   "signerSha256": "cf8faa88aa2843fa3885aa52c04167c36a55bc9626a9c1f5e1a2fe230c937c4f",
   "notes": {
-    "zh": "- 修复部分机型（华为 ROM）shell 服务启动超时：agent 执行 shell 命令不再报「did not start within 30 s」\n- 手机权限：已授权的条目新增「取消授权」按钮，可跳转系统页面撤销授权\n- 「shell 权限」入口去掉「（实验）」字样",
-    "en": "- Fix shell service bind timeout on some devices (Huawei ROM): agent shell commands no longer fail with \"did not start within 30 s\"\n- Phone permissions: granted entries now have a Revoke button that opens the matching system page\n- Drop the \"(experimental)\" marker from the shell access entry"
+    "zh": "- 修复 MagicOS（荣耀 MagicOS 10）无线调试连接/配对超时：连接跟随 mDNS 公告地址并回环兜底，配对失败在界面显示底层原因\n- shell 权限：中途退出设置页后状态不再卡在「正在启动 / 正在发现配对服务」\n- 修复悬浮球无法唤醒的问题\n- SecretId 输入框显示掩码",
+    "en": "- Fix wireless debugging pairing/connect timeout on MagicOS (Honor MagicOS 10): connect to the mDNS-advertised address with loopback fallback, and surface the underlying failure in the UI\n- Shell access: the state no longer sticks at \"Starting / Discovering pairing service\" after leaving the settings page mid-flight\n- Fix the floating ball not waking the assistant\n- Mask the SecretId input field"
   },
-  "publishedAt": "2026-11-13T14:45:16Z"
+  "publishedAt": "2026-11-17T19:02:20Z"
 }
