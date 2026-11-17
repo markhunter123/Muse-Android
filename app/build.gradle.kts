@@ -17,8 +17,8 @@ android {
         applicationId = "io.github.markhunter123.muse"
         minSdk = 29
         targetSdk = 36
-        versionCode = 30
-        versionName = "0.1.4"
+        versionCode = 31
+        versionName = "0.1.5"
         ndk { abiFilters += "arm64-v8a" }
     }
 

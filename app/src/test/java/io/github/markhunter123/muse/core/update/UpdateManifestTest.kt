@@ -9,7 +9,8 @@ import java.io.File
 
 class UpdateManifestTest {
     private val sha = "aa1b6d28eeed618be26a6dd35c247f4be8378dfbc5ba5f56f1454f0faf0b796a"
-    private val signer = "2b37a375ead19476e5d0d9e38920032ea9822e880dcc7540a14e5ab6ac1f4f69"
+    // 实际发版签名（debug 钥匙 + release 配置，所有已装机版本同一证书）。
+    private val signer = "cf8faa88aa2843fa3885aa52c04167c36a55bc9626a9c1f5e1a2fe230c937c4f"
 
     private fun manifest(
         format: String = "1", code: String = "22", minSdk: String = "29", urls: String = """["https://github.com/markhunter123/Muse-Android/releases/download/v0.3.4/a.apk"]""",
