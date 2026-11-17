@@ -327,7 +327,7 @@ private fun GeneralSection(vm: SettingsViewModel) {
             Tag(stringResource(if (voiceConfigured) R.string.voice_tencent_configured else R.string.voice_tencent_missing), if (voiceConfigured) Tone.Success else Tone.Warn)
         }
         Text(stringResource(R.string.voice_tencent_desc), style = DshType.xs13m, color = c.labelSecondary)
-        DInput(voiceId, { voiceId = it }, placeholder = "SecretId")
+        DInput(voiceId, { voiceId = it }, placeholder = "SecretId", secret = true, keyboardType = KeyboardType.Password)
         DInput(voiceKey, { voiceKey = it }, placeholder = "SecretKey", secret = true, keyboardType = KeyboardType.Password)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
             if (voiceConfigured) DButton(stringResource(R.string.key_clear), { vm.clearTencentVoice() }, variant = BtnVariant.Outline, size = BtnSize.Sm)
