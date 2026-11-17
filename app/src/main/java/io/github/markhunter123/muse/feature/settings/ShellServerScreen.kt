@@ -139,6 +139,10 @@ fun ShellServerScreen(onBack: () -> Unit) {
                                 ),
                                 style = DshType.xxs12, color = c.labelTertiary,
                             )
+                            // 底层异常摘要（MagicOS logd 滤应用日志，排障靠 UI 露出来）
+                            st.detail?.let {
+                                Text(it, style = DshType.xxs12, color = c.labelTertiary)
+                            }
                             DButton(stringResource(R.string.shell_pairing_again), {
                                 scope.launch { pairing.restart() }
                             }, size = BtnSize.Sm)

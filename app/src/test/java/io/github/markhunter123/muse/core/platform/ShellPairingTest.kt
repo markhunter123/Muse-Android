@@ -2,8 +2,13 @@ package io.github.markhunter123.muse.core.platform
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import moe.shizuku.manager.adb.AdbKey
+import moe.shizuku.server.muse.AdbEndpoint
 import moe.shizuku.server.muse.AdbResult
 import moe.shizuku.server.muse.KeyStorage
 import moe.shizuku.server.muse.MuseAdb
@@ -32,12 +37,20 @@ class ShellPairingTest {
         override fun clear(): Unit = throw IllegalStateException("keystore broken")
     }
 
-    private class FakeMuseAdb : MuseAdb {
+    private class FakeMuseAdb(
+        private val hangDiscovery: Boolean = false,
+    ) : MuseAdb {
         var paired = 0
-        override suspend fun discoverConnectPort(timeoutMs: Long): Int? = 5555
-        override suspend fun discoverPairingPort(timeoutMs: Long): Int? = 12345
-        override suspend fun connectAndStart(key: AdbKey, port: Int, starterCmd: String): AdbResult = AdbResult(true, null)
-        override suspend fun pair(key: AdbKey, pairingPort: Int, code: String): PairResult { paired++; return PairResult(true, null) }
+        override suspend fun discoverConnectService(timeoutMs: Long): AdbEndpoint = AdbEndpoint("192.168.1.2", 5555)
+        override suspend fun discoverPairingService(timeoutMs: Long): AdbEndpoint {
+            if (hangDiscovery) awaitCancellation()
+            return AdbEndpoint("192.168.1.2", 12345)
+        }
+        override suspend fun connectAndStart(key: AdbKey, service: AdbEndpoint, starterCmd: String): AdbResult = AdbResult(true, null)
+        override suspend fun pair(key: AdbKey, service: AdbEndpoint, code: String): PairResult {
+            paired++
+            return PairResult(true, null)
+        }
     }
 
     /** keystore 坏：submitCode 走 KEYSTORE 失败，绝不触到 pair。 */
@@ -48,6 +61,16 @@ class ShellPairingTest {
         pairing.submitCode("123456")
         assertEquals(PairingStep.Failed(PairFailure.KEYSTORE), pairing.step.value)
         assertEquals(0, adb.paired)
+    }
+
+    /** 页面退出会取消设置页 scope 的协程：Discovering 是单例状态，取消时必须回落 Idle，不能冻在 UI 上。 */
+    @Test fun `cancelling start resets step to idle`() = runTest {
+        val pairing = ShellPairing(FakeMuseAdb(hangDiscovery = true), MemKeyStorage(), controller())
+        val job = launch { pairing.start() }
+        runCurrent()
+        assertEquals(PairingStep.Discovering, pairing.step.value)
+        job.cancelAndJoin()
+        assertEquals(PairingStep.Idle, pairing.step.value)
     }
 
     /** controller 只在配对成功后才被触到；这里塞空的 key storage 保持构造完整。 */

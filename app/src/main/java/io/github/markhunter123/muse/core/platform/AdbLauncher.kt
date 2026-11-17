@@ -22,8 +22,8 @@ sealed interface AdbLaunchOutcome {
 }
 
 /**
- * 无线调试路径的启动器（spec 决策序第 2 步）：mDNS 现发现端口 → AdbClient 连接认证 →
- * shell 执行 starter → 轮询 binder。端口每次现发现不缓存（重开无线调试会换端口）。
+ * 无线调试路径的启动器（spec 决策序第 2 步）：mDNS 现发现连接服务 → AdbClient 连接认证 →
+ * shell 执行 starter → 轮询 binder。地址每次现发现不缓存（重开无线调试会换端口/主机）。
  * 决策序单测在 [AdbLauncherTest]：假 MuseAdb 注入，null 密钥短路、失败顺序都可编排。
  */
 class AdbLauncher @javax.inject.Inject constructor(private val museAdb: MuseAdb) {
@@ -40,9 +40,9 @@ class AdbLauncher @javax.inject.Inject constructor(private val museAdb: MuseAdb)
         discoverTimeoutMs: Long = 5_000,
     ): AdbLaunchOutcome = withContext(Dispatchers.IO) {
         if (key == null) return@withContext AdbLaunchOutcome.NoKey
-        val port = museAdb.discoverConnectPort(discoverTimeoutMs)
+        val service = museAdb.discoverConnectService(discoverTimeoutMs)
             ?: return@withContext AdbLaunchOutcome.NoPort
-        val result = museAdb.connectAndStart(key, port, starterCmd)
+        val result = museAdb.connectAndStart(key, service, starterCmd)
         if (!result.success) return@withContext AdbLaunchOutcome.ConnectFailed(result.log)
         repeat(pollCount) { i ->
             if (pollBinder()) return@withContext AdbLaunchOutcome.Started

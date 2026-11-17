@@ -7,15 +7,18 @@ import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
 import java.io.IOException
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
+import moe.shizuku.server.muse.AdbEndpoint
 
-// MUSE: 上游此处用 androidx.lifecycle.Observer<Int>，该接口在 lifecycle 2.11 里已移除，改用等价的 Kotlin 函数类型。
+// MUSE: 上游此处用 androidx.lifecycle.Observer<Int>，该接口在 lifecycle 2.11 里已移除，改用等价的 Kotlin 函数类型；
+// 回调从裸端口改为 host+port（MUSE: AdbEndpoint）——部分厂商 ROM 的 adbd 只绑 wlan IP，回环不可达。
 @RequiresApi(Build.VERSION_CODES.R)
 class AdbMdns(
     context: Context, private val serviceType: String,
-    private val observer: (Int) -> Unit
+    private val observer: (AdbEndpoint) -> Unit
 ) {
 
     private var registered = false
@@ -53,31 +56,39 @@ class AdbMdns(
     }
 
     private fun onServiceLost(info: NsdServiceInfo) {
-        if (info.serviceName == serviceName) observer(-1)
+        if (info.serviceName == serviceName) observer(AdbEndpoint("", -1))
     }
 
     private fun onServiceResolved(resolvedService: NsdServiceInfo) {
+        val host = resolvedService.host?.hostAddress ?: return
         if (running && NetworkInterface.getNetworkInterfaces()
                 .asSequence()
                 .any { networkInterface ->
                     networkInterface.inetAddresses
                         .asSequence()
-                        .any { resolvedService.host.hostAddress == it.hostAddress }
+                        .any { host == it.hostAddress }
                 }
-            && isPortAvailable(resolvedService.port)
+            && isPortAvailable(resolvedService.host, resolvedService.port)
         ) {
             serviceName = resolvedService.serviceName
-            observer(resolvedService.port)
+            observer(AdbEndpoint(host, resolvedService.port))
         }
     }
 
-    private fun isPortAvailable(port: Int) = try {
+    // MUSE: 探活必须覆盖两类绑定姿势——绑定失败（端口被占）= 有东西在听 = 端口可用。
+    // 原生 Android 的 adbd 绑 0.0.0.0，回环探活就够；MagicOS 10 实测 adbd 的连接端口只绑 wlan IP
+    // （回环 refused），而回环专属监听也存在——所以公告主机或回环任一被占用都算活服务，
+    // 只探其一会把另一种姿势误判成失效公告、永远发现不到。两个都绑得上才是真失效。
+    private fun isPortAvailable(host: InetAddress, port: Int) =
+        isBindable(host, port) && isBindable(InetAddress.getByName(LOOPBACK), port)
+
+    private fun isBindable(host: InetAddress, port: Int) = try {
         ServerSocket().use {
-            it.bind(InetSocketAddress("127.0.0.1", port), 1)
-            false
+            it.bind(InetSocketAddress(host, port), 1)
+            true
         }
     } catch (e: IOException) {
-        true
+        false
     }
 
     internal class DiscoveryListener(private val adbMdns: AdbMdns) : NsdManager.DiscoveryListener {
@@ -126,6 +137,7 @@ class AdbMdns(
     companion object {
         const val TLS_CONNECT = "_adb-tls-connect._tcp"
         const val TLS_PAIRING = "_adb-tls-pairing._tcp"
+        const val LOOPBACK = "127.0.0.1"
         const val TAG = "AdbMdns"
     }
 }

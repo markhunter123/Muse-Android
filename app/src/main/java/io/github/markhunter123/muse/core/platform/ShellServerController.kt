@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.markhunter123.muse.core.data.SettingsRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -77,18 +78,28 @@ class ShellServerController @Inject constructor(
 
     /** 确保 server 在跑：binder → 无线调试自动连接 → root 兜底（shellRoot 门禁）。自动路径用。 */
     suspend fun ensureRunning(): ShellState = withContext(Dispatchers.IO) {
+        try {
+            ensureRunningInner()
+        } catch (e: CancellationException) {
+            // 调用方（设置页 scope）取消时 CONNECTING/STARTING 会冻在 UI 上，回落 IDLE 再抛。
+            _connection.value = ConnectionStatus.IDLE
+            throw e
+        }
+    }
+
+    private suspend fun ensureRunningInner(): ShellState {
         val current = shell.refresh()
-        if (current.ready) return@withContext current
+        if (current.ready) return current
         if (Build.VERSION.SDK_INT >= 30) {
             val key = runCatching { MuseAdbKeys.loadKey(keyStorage) }.getOrNull()
-            if (key == null) return@withContext if (settings.current().shellRoot) startRoot() else shell.refresh()
+            if (key == null) return if (settings.current().shellRoot) startRoot() else shell.refresh()
             val starterCmd = starterCommand()
             _connection.value = ConnectionStatus.CONNECTING
             when (val outcome = launcher.launch(key, starterCmd, ::pollBinder)) {
                 AdbLaunchOutcome.Started -> {
                     shell.lastFailure = null
                     _connection.value = ConnectionStatus.IDLE
-                    return@withContext shell.refresh()
+                    return shell.refresh()
                 }
                 AdbLaunchOutcome.NoKey -> {}
                 else -> {
@@ -98,7 +109,7 @@ class ShellServerController @Inject constructor(
             }
         }
         // root 兜底：spec 说 root 不静默探测——shellRoot 开关即用户的显式授权
-        if (settings.current().shellRoot) startRoot() else shell.refresh()
+        return if (settings.current().shellRoot) startRoot() else shell.refresh()
     }
 
     /** 设置页按钮的显式启动：点击本身就是意图，不走 shellRoot 门禁。 */
@@ -162,27 +173,33 @@ class ShellServerController @Inject constructor(
 
     private suspend fun startRoot(): ShellState {
         _connection.value = ConnectionStatus.CONNECTING
-        val info = context.applicationInfo
-        val inner = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir, context.packageName)
-        // su -c 的命令体是单个参数：Runtime.exec 的字符串重载按空格切参、引号会被当字面量，必须走数组。
-        runCatching {
-            val p = Runtime.getRuntime().exec(arrayOf("su", "-c", inner))
-            p.inputStream.use { it.readBytes() }
-            p.errorStream.use { it.readBytes() }
-            p.waitFor()
-        }
-        _connection.value = ConnectionStatus.STARTING
-
-        val deadline = System.currentTimeMillis() + START_TIMEOUT_MS
-        while (System.currentTimeMillis() < deadline) {
-            if (pollBinder()) {
-                _connection.value = ConnectionStatus.IDLE
-                return shell.refresh()
+        try {
+            val info = context.applicationInfo
+            val inner = ShellServerCommands.starterCommand(info.sourceDir, info.nativeLibraryDir, context.packageName)
+            // su -c 的命令体是单个参数：Runtime.exec 的字符串重载按空格切参、引号会被当字面量，必须走数组。
+            runCatching {
+                val p = Runtime.getRuntime().exec(arrayOf("su", "-c", inner))
+                p.inputStream.use { it.readBytes() }
+                p.errorStream.use { it.readBytes() }
+                p.waitFor()
             }
-            delay(1_000)
+            _connection.value = ConnectionStatus.STARTING
+
+            val deadline = System.currentTimeMillis() + START_TIMEOUT_MS
+            while (System.currentTimeMillis() < deadline) {
+                if (pollBinder()) {
+                    _connection.value = ConnectionStatus.IDLE
+                    return shell.refresh()
+                }
+                delay(1_000)
+            }
+            _connection.value = ConnectionStatus.FAILED
+            return shell.refresh()
+        } catch (e: CancellationException) {
+            // 设置页退出取消轮询时 STARTING 会冻住，回落 IDLE 再抛。
+            _connection.value = ConnectionStatus.IDLE
+            throw e
         }
-        _connection.value = ConnectionStatus.FAILED
-        return shell.refresh()
     }
 
     /** 给 UI 复制的手动启动命令（adb shell …）。 */

@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import io.github.markhunter123.muse.core.data.SettingsRepository
 import kotlinx.coroutines.test.runTest
 import moe.shizuku.manager.adb.AdbKey
+import moe.shizuku.server.muse.AdbEndpoint
 import moe.shizuku.server.muse.AdbResult
 import moe.shizuku.server.muse.KeyStorage
 import moe.shizuku.server.muse.MuseAdb
@@ -32,12 +33,12 @@ class ShellServerControllerTest {
 
     private class FakeMuseAdb : MuseAdb {
         val calls = mutableListOf<String>()
-        override suspend fun discoverConnectPort(timeoutMs: Long): Int? { calls += "discover:$timeoutMs"; return 5555 }
-        override suspend fun discoverPairingPort(timeoutMs: Long): Int? { calls += "pairing:$timeoutMs"; return null }
-        override suspend fun connectAndStart(key: AdbKey, port: Int, starterCmd: String): AdbResult {
-            calls += "connect:$port:$starterCmd"; return AdbResult(true, null)
+        override suspend fun discoverConnectService(timeoutMs: Long): AdbEndpoint? { calls += "discover:$timeoutMs"; return AdbEndpoint("192.168.1.2", 5555) }
+        override suspend fun discoverPairingService(timeoutMs: Long): AdbEndpoint? { calls += "pairing:$timeoutMs"; return null }
+        override suspend fun connectAndStart(key: AdbKey, service: AdbEndpoint, starterCmd: String): AdbResult {
+            calls += "connect:${service.port}:$starterCmd"; return AdbResult(true, null)
         }
-        override suspend fun pair(key: AdbKey, pairingPort: Int, code: String): PairResult =
+        override suspend fun pair(key: AdbKey, service: AdbEndpoint, code: String): PairResult =
             PairResult(false, null)
     }
 
